@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивный тест по PySide6 — 67 вопросов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --correct: #2e7d64;
+      --wrong: #7a2e3e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      line-height: 1.8;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      transition: 0.2s;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 28px;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .sub {
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+    }
+    .question-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: 0.1s;
+    }
+    .question-header {
+      background: var(--surface);
+      padding: 14px 20px;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .q-num {
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-size: 12px;
+    }
+    .q-text {
+      padding: 18px 22px 8px 22px;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+    .options {
+      padding: 8px 22px 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-btn {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-family: var(--body-font);
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.15s;
+      text-align: left;
+    }
+    .option-btn:hover {
+      background: var(--surface);
+      border-color: var(--accent-dim);
+    }
+    .option-correct {
+      background: rgba(79,209,165,0.15);
+      border-color: var(--accent3);
+      color: var(--accent3);
+      cursor: default;
+      position: relative;
+    }
+    .option-wrong {
+      background: rgba(220,80,80,0.12);
+      border-color: #c45;
+      color: #f9a;
+      cursor: default;
+      text-decoration: line-through;
+    }
+    .feedback {
+      margin: 0 22px 18px 22px;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.3);
+      display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct { color: var(--accent3); border-left: 3px solid var(--accent3); }
+    .feedback.wrong { color: #f9a; border-left: 3px solid #c45; }
+    .result-panel {
+      position: sticky;
+      bottom: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 12px 24px;
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(8px);
+    }
+    .result-stats {
+      display: flex;
+      gap: 24px;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .grade {
+      background: var(--accent-dim);
+      padding: 6px 18px;
+      border-radius: 40px;
+      font-weight: 700;
+    }
+    .reset-btn {
+      background: var(--accent);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-family: var(--mono);
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .reset-btn:hover { background: #7ab2ff; transform: translateY(-1px); }
+    @media (max-width: 650px) {
+      .result-panel { flex-direction: column; align-items: stretch; border-radius: 20px; }
+      .result-stats { justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<nav class="topbar">
+  <a class="back-btn" href="../main_page.html">← На главную</a>
+  <span class="topbar-badge">PySide6 · Интерактивный тест</span>
+</nav>
+<div class="container">
+  <h1>📋 67 вопросов по курсу PySide6</h1>
+  <div class="sub">Кликните на вариант ответа — узнаете, правильный ли он. В конце — статистика и оценка.</div>
+  <div id="questions-container"></div>
+  <div class="result-panel" id="resultPanel">
+    <div class="result-stats">
+      <span>✅ Правильно: <strong id="correct-count">0</strong> / <span id="total-count">67</span></span>
+      <span>📊 Процент: <strong id="percent">0</strong>%</span>
+    </div>
+    <div><span class="grade" id="grade-label">Оценка: —</span></div>
+    <button class="reset-btn" id="reset-test">⟳ Сбросить все ответы</button>
+  </div>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // БАЗА ВОПРОСОВ (67 штук) — полные варианты ответов + правильные
+  // --------------------------------------------------------------
+  const questionsData = [
+    { text: "Как расшифровывается аббревиатура WIMP?", options: ["A) Windows, Icons, Mouse, Pointer", "B) Windows, Icons, Menus, Pointing device", "C) Widgets, Interface, Modules, Python", "D) Window, Input, Menu, Program"], correct: "B) Windows, Icons, Menus, Pointing device" },
+    { text: "Какая система впервые публично продемонстрировала концепции мыши и окон в 1968 году?", options: ["A) Xerox PARC Smalltalk", "B) Apple Lisa", "C) NLS (oN-Line System)", "D) Microsoft Windows 1.0"], correct: "C) NLS (oN-Line System)" },
+    { text: "Кто основал Qt?", options: ["A) Бьёрн Страуструп и Линус Торвальдс", "B) Эйрик Чамбе-Энг и Хавард Норд", "C) Гвидо ван Россум и Джеймс Гослинг", "D) Сергей Брин и Ларри Пейдж"], correct: "B) Эйрик Чамбе-Энг и Хавард Норд" },
+    { text: "Какие платформы поддерживает Qt для создания кроссплатформенных приложений? (несколько)", options: ["A) Только Windows", "B) Windows", "C) macOS", "D) Linux", "E) Android", "F) Только iOS"], correct: "B) Windows, C) macOS, D) Linux, E) Android", multi: true },
+    { text: "PySide6 — это:", options: ["A) Альтернативное название PyQt6", "B) Официальная привязка Python к Qt от The Qt Company", "C) Сторонняя библиотека для создания консольных приложений", "D) Фреймворк для машинного обучения"], correct: "B) Официальная привязка Python к Qt от The Qt Company" },
+    { text: "Какой стиль именования используется в PySide6?", options: ["A) snake_case (как в PEP8)", "B) mixedCase (как в C++ Qt)", "C) kebab-case", "D) UPPER_CASE"], correct: "B) mixedCase (как в C++ Qt)" },
+    { text: "Что произойдёт, если не вызвать `window.show()` после создания виджета?", options: ["A) Окно появится, но будет неактивным", "B) Окно появится в свёрнутом виде", "C) Окно не появится (останется скрытым)", "D) Приложение завершится с ошибкой"], correct: "C) Окно не появится (останется скрытым)" },
+    { text: "Какой класс отвечает за цикл обработки событий в Qt-приложении?", options: ["A) QWidget", "B) QMainWindow", "C) QApplication", "D) QEventLoop"], correct: "C) QApplication" },
+    { text: "Что из перечисленного является правильным способом создания экземпляра QApplication? (несколько)", options: ["A) app = QApplication()", "B) app = QApplication(sys.argv)", "C) app = QApplication([])", "D) app = QApplication(0)"], correct: "B) app = QApplication(sys.argv), C) app = QApplication([])", multi: true },
+    { text: "Для чего в QMainWindow используется метод setCentralWidget()?", options: ["A) Для добавления виджета в строку состояния", "B) Для установки виджета, который будет занимать центральную область окна", "C) Для добавления виджета на панель инструментов", "D) Для создания всплывающего окна"], correct: "B) Для установки виджета, который будет занимать центральную область окна" },
+    { text: "Что такое сигнал (signal) в Qt?", options: ["A) Метод, который вызывается при запуске приложения", "B) Уведомление, которое виджет отправляет при наступлении какого-либо события", "C) Специальный тип данных для хранения цвета", "D) Функция для рисования графики"], correct: "B) Уведомление, которое виджет отправляет при наступлении какого-либо события" },
+    { text: "Что такое слот (slot) в Qt?", options: ["A) Получатель сигнала (функция или метод)", "B) Тип переменной для хранения строки", "C) Виджет для ввода текста", "D) Компоновка для размещения виджетов"], correct: "A) Получатель сигнала (функция или метод)" },
+    { text: "Какой метод используется для подключения сигнала к слоту в PySide6?", options: ["A) signal.bind()", "B) signal.link()", "C) signal.connect()", "D) signal.attach()"], correct: "C) signal.connect()" },
+    { text: "Какие из следующих сигналов есть у QPushButton? (несколько)", options: ["A) clicked", "B) pressed", "C) released", "D) textChanged", "E) toggled"], correct: "A) clicked, B) pressed, C) released, E) toggled", multi: true },
+    { text: "Как сделать кнопку переключаемой (toggle button) в PySide6?", options: ["A) button.setToggleMode(True)", "B) button.setCheckable(True)", "C) button.setSwitchable(True)", "D) button.setClickable(True)"], correct: "B) button.setCheckable(True)" },
+    { text: "Какой сигнал передаёт состояние переключаемой кнопки (True/False)?", options: ["A) pressed", "B) released", "C) clicked", "D) toggled"], correct: "C) clicked" },
+    { text: "Какой виджет используется для создания текстовой метки?", options: ["A) QTextBox", "B) QLabel", "C) QTextLabel", "D) QDisplay"], correct: "B) QLabel" },
+    { text: "Как установить размер шрифта 25 пунктов для QLabel?", options: ["A) label.setFontSize(25)", "B) label.font().setPointSize(25)", "C) label.setPointSize(25)", "D) label.setSize(25)"], correct: "B) label.font().setPointSize(25)" },
+    { text: "Какой метод выравнивает текст в QLabel по центру по горизонтали и вертикали?", options: ["A) label.setAlignment(Qt.AlignCenter)", "B) label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)", "C) label.center()", "D) label.setCenter(True)"], correct: "B) label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)" },
+    { text: "Какие состояния может иметь QCheckBox? (несколько)", options: ["A) Qt.Checked", "B) Qt.Unchecked", "C) Qt.PartiallyChecked", "D) Qt.Indeterminate"], correct: "A) Qt.Checked, B) Qt.Unchecked, C) Qt.PartiallyChecked", multi: true },
+    { text: "Как сделать QCheckBox трёхсостояние?", options: ["A) checkbox.setTristate(True)", "B) checkbox.setThreeState(True)", "C) checkbox.setCheckState(Qt.PartiallyChecked)", "D) Оба варианта A и C верны"], correct: "D) Оба варианта A и C верны" },
+    { text: "Как добавить элементы в QComboBox?", options: ["A) combo.addItem()", "B) combo.addItems()", "C) combo.append()", "D) Все варианты верны"], correct: "D) Все варианты верны" },
+    { text: "Какой сигнал срабатывает при изменении выбранного элемента в QComboBox и передаёт индекс?", options: ["A) currentTextChanged", "B) itemSelected", "C) currentIndexChanged", "D) selectionChanged"], correct: "C) currentIndexChanged" },
+    { text: "Как сделать QComboBox редактируемым?", options: ["A) combo.setEditable(True)", "B) combo.setEditable(False)", "C) combo.makeEditable()", "D) combo.enableEditing()"], correct: "A) combo.setEditable(True)" },
+    { text: "Что произойдёт, если подключить несколько слотов к одному сигналу?", options: ["A) Будет выполнен только первый слот", "B) Будет выполнен только последний слот", "C) Все слоты выполнятся в порядке подключения", "D) Ошибка"], correct: "C) Все слоты выполнятся в порядке подключения" },
+    { text: "Какая компоновка располагает виджеты вертикально?", options: ["A) QHBoxLayout", "B) QGridLayout", "C) QVBoxLayout", "D) QStackedLayout"], correct: "C) QVBoxLayout" },
+    { text: "Какая компоновка горизонтальная?", options: ["A) QHBoxLayout", "B) QVBoxLayout", "C) QGridLayout", "D) QFormLayout"], correct: "A) QHBoxLayout" },
+    { text: "QGridLayout позволяет:", options: ["A) размещать виджеты в сетке (строка, столбец)", "B) только горизонтально", "C) только вертикально", "D) стопкой"], correct: "A) размещать виджеты в сетке (строка, столбец)" },
+    { text: "Как добавить компоновку внутрь другой?", options: ["A) parent.addLayout(child)", "B) parent.setLayout(child)", "C) parent.insertLayout(child)", "D) parent.attach(child)"], correct: "A) parent.addLayout(child)" },
+    { text: "Как установить расстояние между элементами в компоновке?", options: ["A) setMargin()", "B) setSpacing()", "C) setPadding()", "D) setGap()"], correct: "B) setSpacing()" },
+    { text: "Как убрать отступы вокруг компоновки?", options: ["A) setContentsMargins(0,0,0,0)", "B) setMargin(0)", "C) setPadding(0)", "D) setSpacing(0)"], correct: "A) setContentsMargins(0,0,0,0)" },
+    { text: "QStackedLayout — это:", options: ["A) горизонтальная компоновка", "B) вертикальная", "C) стопка виджетов (виден один)", "D) сетка"], correct: "C) стопка виджетов (виден один)" },
+    { text: "Как переключить видимый виджет в QStackedLayout по индексу?", options: ["A) setCurrentWidget(index)", "B) setCurrentIndex(index)", "C) showIndex(index)", "D) switchTo(index)"], correct: "B) setCurrentIndex(index)" },
+    { text: "Готовый виджет для вкладок:", options: ["A) QTabbedPane", "B) QTabWidget", "C) QStackedTabs", "D) QNotebook"], correct: "B) QTabWidget" },
+    { text: "Как добавить панель инструментов в QMainWindow?", options: ["A) addToolBar()", "B) setToolBar()", "C) toolbar =", "D) attachToolBar()"], correct: "A) addToolBar()" },
+    { text: "Что такое QAction?", options: ["A) виджет ввода", "B) абстрактное действие (меню, тулбар, хоткей)", "C) компоновка", "D) событие"], correct: "B) абстрактное действие (меню, тулбар, хоткей)" },
+    { text: "Сигнал QAction при активации:", options: ["A) activated", "B) clicked", "C) triggered", "D) pressed"], correct: "C) triggered" },
+    { text: "Как сделать QAction переключаемым?", options: ["A) setCheckable(True)", "B) setToggle(True)", "C) setSwitchable(True)", "D) setSelectable(True)"], correct: "A) setCheckable(True)" },
+    { text: "Разделитель на панели инструментов:", options: ["A) addSeparator()", "B) addDivider()", "C) addLine()", "D) addSpacer()"], correct: "A) addSeparator()" },
+    { text: "Как добавить строку состояния?", options: ["A) setStatusBar(QStatusBar())", "B) statusBar = QStatusBar()", "C) addStatusBar()", "D) createStatusBar()"], correct: "A) setStatusBar(QStatusBar())" },
+    { text: "Подсказка в статус-баре для QAction:", options: ["A) setToolTip()", "B) setStatusTip()", "C) setHint()", "D) setInfo()"], correct: "B) setStatusTip()" },
+    { text: "Символ & в меню:", options: ["A) горячая клавиша Alt+буква", "B) разделитель", "C) иконка", "D) подменю"], correct: "A) горячая клавиша Alt+буква" },
+    { text: "Горячая клавиша для QAction (Ctrl+S):", options: ["A) setShortcut('Ctrl+S')", "B) setHotkey()", "C) setKeySequence()", "D) bind()"], correct: "A) setShortcut('Ctrl+S')" },
+    { text: "Стандартная последовательность QKeySequence.Copy:", options: ["A) Ctrl+C", "B) Ctrl+X", "C) Ctrl+V", "D) Ctrl+Z"], correct: "A) Ctrl+C" },
+    { text: "Как создать подменю?", options: ["A) addAction(submenu)", "B) addSubMenu()", "C) addMenu(submenu)", "D) attach(submenu)"], correct: "C) addMenu(submenu)" },
+    { text: "Класс для диалоговых окон:", options: ["A) QWindow", "B) QDialog", "C) QWidget", "D) QPopup"], correct: "B) QDialog" },
+    { text: "Модальное окно — это:", options: ["A) блокирует родительское окно", "B) можно перемещать", "C) автоматически закрывается", "D) без рамки"], correct: "A) блокирует родительское окно" },
+    { text: "Запуск модального диалога:", options: ["A) show()", "B) open()", "C) exec()", "D) run()"], correct: "C) exec()" },
+    { text: "Методы QDialog для закрытия с результатом:", options: ["A) ok()", "B) accept()", "C) cancel()", "D) reject()"], correct: "B) accept(), D) reject()", multi: true },
+    { text: "Класс стандартных кнопок диалога:", options: ["A) QButtonBox", "B) QDialogButtons", "C) QDialogButtonBox", "D) QStandardButtons"], correct: "C) QDialogButtonBox" },
+    { text: "Встроенные диалоги Qt (несколько):", options: ["A) QMessageBox", "B) QFileDialog", "C) QColorDialog", "D) QFontDialog", "E) QInputDialog"], correct: "A) QMessageBox, B) QFileDialog, C) QColorDialog, D) QFontDialog, E) QInputDialog", multi: true },
+    { text: "QMessageBox для информации:", options: ["A) warning()", "B) critical()", "C) information()", "D) question()"], correct: "C) information()" },
+    { text: "Диалог выбора одного файла:", options: ["A) getSaveFileName()", "B) getOpenFileName()", "C) getExistingDirectory()", "D) getOpenFileNames()"], correct: "B) getOpenFileName()" },
+    { text: "Как сделать виджет отдельным окном?", options: ["A) передать родителя", "B) НЕ передавать родителя (parent=None)", "C) makeWindow()", "D) установить флаг Qt.Window"], correct: "B) НЕ передавать родителя (parent=None)" },
+    { text: "Почему исчезает окно, созданное в локальной переменной?", options: ["A) автотаймер", "B) сборщик мусора Python", "C) ошибка платформы", "D) не вызван show()"], correct: "B) сборщик мусора Python" },
+    { text: "Как сохранить ссылку на дополнительное окно?", options: ["A) глобальная переменная", "B) self.w = AnotherWindow()", "C) window.persist()", "D) локальная переменная вне метода"], correct: "B) self.w = AnotherWindow()" },
+    { text: "Проверка видимости окна:", options: ["A) isShown()", "B) isVisible()", "C) isDisplayed()", "D) visible()"], correct: "B) isVisible()" },
+    { text: "Скрыть окно без уничтожения:", options: ["A) close()", "B) hide()", "C) setVisible(False)", "D) B и C"], correct: "D) B и C" },
+    { text: "Обработчик нажатия кнопки мыши:", options: ["A) mouseMoveEvent", "B) mousePressEvent", "C) mouseReleaseEvent", "D) mouseClickEvent"], correct: "B) mousePressEvent" },
+    { text: "Включить отслеживание мыши без нажатия:", options: ["A) setMouseTracking(True)", "B) enableMouseMove()", "C) trackMouse(True)", "D) setMouseMovement(True)"], correct: "A) setMouseTracking(True)" },
+    { text: "Позиция мыши относительно виджета:", options: ["A) globalPos()", "B) screenPos()", "C) pos()", "D) localPos()"], correct: "C) pos()" },
+    { text: "Обработчик контекстного меню:", options: ["A) contextMenuEvent", "B) rightClickEvent", "C) popupMenuEvent", "D) menuEvent"], correct: "A) contextMenuEvent" },
+  ];
+
+  const TOTAL_QS = questionsData.length;
+  let userAnswers = new Array(TOTAL_QS).fill(null);   // храним выбранный текст ответа (строка)
+  let answerStatus = new Array(TOTAL_QS).fill(false); // true/false правильно/неправильно
+
+  function normalizeAnswer(correctStr, selectedStr) {
+    // для мультивыбора сравниваем множество (упрощённо: обрезаем пробелы и сравниваем строки)
+    if (selectedStr === correctStr) return true;
+    // дополнительно: если в correctStr есть запятые -> мультивыбор
+    if (correctStr.includes(',') && selectedStr.includes(',')) {
+      let corrSet = new Set(correctStr.split(',').map(s => s.trim()));
+      let selSet = new Set(selectedStr.split(',').map(s => s.trim()));
+      if (corrSet.size === selSet.size && [...corrSet].every(v => selSet.has(v))) return true;
+    }
+    return false;
+  }
+
+  function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+    questionsData.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      card.setAttribute('data-qidx', idx);
+      const header = document.createElement('div');
+      header.className = 'question-header';
+      header.innerHTML = `<span class="q-num">Вопрос ${idx+1}</span>`;
+      const qTextDiv = document.createElement('div');
+      qTextDiv.className = 'q-text';
+      qTextDiv.innerText = q.text;
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'options';
+      
+      q.options.forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        // если уже выбран ответ — показать состояние
+        if (userAnswers[idx] === opt) {
+          const isCorrect = answerStatus[idx];
+          if (isCorrect) btn.classList.add('option-correct');
+          else btn.classList.add('option-wrong');
+        }
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (userAnswers[idx] !== null) return; // уже отвечено, блокируем повторный выбор
+          const selected = opt;
+          const isOk = normalizeAnswer(q.correct, selected);
+          userAnswers[idx] = selected;
+          answerStatus[idx] = isOk;
+          // обновить кнопки: подсветить правильный/неправильный
+          const allBtns = optionsDiv.querySelectorAll('.option-btn');
+          allBtns.forEach(btnEl => {
+            if (btnEl.innerText === selected) {
+              if (isOk) btnEl.classList.add('option-correct');
+              else btnEl.classList.add('option-wrong');
+            }
+            // опционально: можно показать правильный вариант, но не обязательно
+          });
+          // показать фидбек
+          const fbDiv = card.querySelector('.feedback');
+          if (fbDiv) {
+            fbDiv.classList.add('show');
+            fbDiv.className = `feedback show ${isOk ? 'correct' : 'wrong'}`;
+            fbDiv.innerHTML = isOk ? '✅ Верно!' : `❌ Неверно. Правильный ответ: ${q.correct}`;
+          }
+          updateStatsAndGrade();
+        });
+        optionsDiv.appendChild(btn);
+      });
+      card.appendChild(header);
+      card.appendChild(qTextDiv);
+      card.appendChild(optionsDiv);
+      const feedbackDiv = document.createElement('div');
+      feedbackDiv.className = 'feedback';
+      card.appendChild(feedbackDiv);
+      container.appendChild(card);
+    });
+  }
+
+  function updateStatsAndGrade() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    const correctCount = answerStatus.filter(v => v === true).length;
+    const percent = answered === 0 ? 0 : Math.round((correctCount / TOTAL_QS) * 100);
+    document.getElementById('correct-count').innerText = correctCount;
+    document.getElementById('total-count').innerText = TOTAL_QS;
+    document.getElementById('percent').innerText = percent;
+    let grade = '';
+    if (percent < 50) grade = '2 (неудовлетворительно)';
+    else if (percent <= 75) grade = '3 (удовлетворительно)';
+    else if (percent <= 85) grade = '4 (хорошо)';
+    else grade = '5 (отлично)';
+    document.getElementById('grade-label').innerHTML = `Оценка: ${grade}`;
+  }
+
+  function resetTest() {
+    userAnswers.fill(null);
+    answerStatus.fill(false);
+    // перерисовать всё заново
+    renderQuestions();
+    updateStatsAndGrade();
+  }
+
+  document.getElementById('reset-test').addEventListener('click', resetTest);
+  renderQuestions();
+  updateStatsAndGrade();
+</script>
+</body>
+</html>

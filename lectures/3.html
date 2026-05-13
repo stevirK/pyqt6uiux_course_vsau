@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Лекция 3 — Компоновки: размещение виджетов в окне</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent; cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 780px; margin: 0 auto;
+      padding: 56px 24px 100px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .lecture-header { margin-bottom: 52px; }
+    .lecture-kicker {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .lecture-kicker::before {
+      content: ''; display: inline-block;
+      width: 20px; height: 1px; background: var(--accent);
+    }
+    .lecture-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700; color: var(--text-bright);
+      line-height: 1.25; margin-bottom: 24px;
+    }
+    .lecture-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .lecture-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .content h2 {
+      font-family: var(--serif); font-size: 22px; font-weight: 700;
+      color: var(--text-bright); margin: 48px 0 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .content h3 {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin: 36px 0 12px;
+    }
+    .content h4 {
+      font-family: var(--serif); font-size: 17px; font-weight: 600;
+      color: var(--text-bright); margin: 28px 0 10px;
+    }
+    .content p {
+      color: var(--text); margin-bottom: 16px; font-size: 15.5px;
+    }
+    .content strong { color: var(--text-bright); font-weight: 600; }
+    .content em { color: var(--accent); font-style: italic; }
+
+    .content ul, .content ol {
+      margin: 0 0 20px 0; padding-left: 0;
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .content ul li, .content ol li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: var(--text);
+    }
+    .content ul li::before {
+      content: '—'; color: var(--accent); font-family: var(--mono);
+      font-size: 12px; padding-top: 4px; flex-shrink: 0;
+    }
+    .content ol { counter-reset: ol-counter; }
+    .content ol li { counter-increment: ol-counter; }
+    .content ol li::before {
+      content: counter(ol-counter) '.';
+      color: var(--accent); font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      min-width: 20px; padding-top: 4px; flex-shrink: 0;
+    }
+
+    .content pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 20px 20px 20px 22px;
+      overflow-x: auto;
+      margin: 20px 0 24px;
+      position: relative;
+    }
+    .content pre code {
+      font-family: var(--mono); font-size: 13px;
+      line-height: 1.7; color: #a8c4ff;
+      white-space: pre;
+    }
+    .content code:not(pre code) {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--accent-dim); color: var(--accent);
+      padding: 1px 6px; border-radius: 3px;
+    }
+    .code-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 6px; display: block;
+    }
+
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent3);
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .note strong { color: var(--accent3); }
+
+    .table-flags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 20px 0 24px;
+      overflow-x: auto;
+    }
+    .table-flags table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .table-flags th, .table-flags td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-flags th {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .table-flags tr:last-child td {
+      border-bottom: none;
+    }
+    .table-flags td code {
+      background: transparent;
+      padding: 0;
+      font-size: 11px;
+    }
+
+    .demo-note {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .questions-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 28px 24px;
+      margin-top: 56px;
+    }
+    .questions-block h2 {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); margin: 0 0 20px;
+      padding: 0; border: none;
+    }
+    .questions-block ol {
+      margin: 0; gap: 12px;
+    }
+    .questions-block ol li {
+      font-size: 14px; color: var(--text); line-height: 1.6;
+    }
+
+    .footer-nav {
+      margin-top: 64px; padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-lab {
+      background: var(--accent3); color: #0a1510;
+    }
+    .btn-lab:hover { background: #6fdfb5; transform: translateY(-1px); }
+    .btn-next {
+      background: var(--accent); color: #0d0f14;
+    }
+    .btn-next:hover { background: #7ab2ff; transform: translateY(-1px); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 38px; height: 38px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--text-dim);
+      transition: all 0.2s; z-index: 50;
+      opacity: 0; pointer-events: none;
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .page { padding: 36px 16px 80px; }
+      .topbar { padding: 10px 16px; }
+      .topbar-num { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="back-btn" href="../main_page.html">← Назад</a>
+  <span class="topbar-badge">PyQt6 · PySide6</span>
+  <span class="topbar-num">Лекция 03 / 07</span>
+</nav>
+
+<div class="page">
+
+  <header class="lecture-header">
+    <div class="lecture-kicker">Лекция 3</div>
+    <h1 class="lecture-title">Компоновки: <br>размещение виджетов в окне</h1>
+    <div class="lecture-meta">
+      <span>📐 Темы: QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QTabWidget</span>
+      <span>⏱ ~40 мин</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <h2>Зачем нужны компоновки?</h2>
+    <p>
+      До сих пор мы успешно создавали окна и добавляли в них <strong>один</strong> виджет. 
+      Однако в реальных приложениях требуется размещать сразу несколько элементов управления: 
+      кнопки, поля ввода, метки и т.д. Чтобы управлять их расположением и автоматически 
+      адаптировать интерфейс при изменении размеров окна, в Qt используются 
+      <strong>компоновки (layouts)</strong>.
+    </p>
+    <p>
+      В Qt доступно четыре базовые компоновки:
+    </p>
+    <div class="table-flags">
+      <table>
+        <thead><tr><th>Компоновка</th><th>Поведение</th></tr></thead>
+        <tbody>
+          <tr><td><code>QHBoxLayout</code></td><td>Линейная горизонтальная компоновка (слева направо)</td></tr>
+          <tr><td><code>QVBoxLayout</code></td><td>Линейная вертикальная компоновка (сверху вниз)</td></tr>
+          <tr><td><code>QGridLayout</code></td><td>Сетка с индексируемыми строками и столбцами</td></tr>
+          <tr><td><code>QStackedLayout</code></td><td>Стопкой (по оси Z) — одновременно виден только один виджет</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Компоновки можно вкладывать друг в друга, создавая сложные иерархические структуры интерфейса.
+    </p>
+
+    <h3>Вспомогательный виджет Color</h3>
+    <p>
+      Для наглядности примеров создадим простой пользовательский виджет, залитый сплошным цветом. 
+      Сохраните следующий код в файл <code>layout_colorwidget.py</code>:
+    </p>
+    <span class="code-label">layout_colorwidget.py</span>
+    <pre><code>from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QWidget
+
+class Color(QWidget):
+    def __init__(self, color):
+        super().__init__()
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(color))
+        self.setPalette(palette)</code></pre>
+    <p>
+      Благодаря этому виджету мы сможем легко различать элементы компоновок: 
+      <code>Color("red")</code> создаст красный прямоугольник, <code>Color("blue")</code> — синий и т.д.
+    </p>
+
+    <h2>QVBoxLayout — вертикальное расположение</h2>
+    <p>
+      <code>QVBoxLayout</code> располагает виджеты один над другим. 
+      Каждый новый виджет добавляется в нижнюю часть столбца.
+    </p>
+    <span class="code-label">vertical_layout.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Вертикальная компоновка")
+        
+        layout = QVBoxLayout()
+        layout.addWidget(Color("red"))
+        layout.addWidget(Color("green"))
+        layout.addWidget(Color("blue"))
+        
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+    <div class="demo-note">
+      🎨 Результат: три цветных прямоугольника (красный, зелёный, синий) располагаются друг под другом, 
+      растягиваясь по ширине окна.
+    </div>
+
+    <h2>QHBoxLayout — горизонтальное расположение</h2>
+    <p>
+      <code>QHBoxLayout</code> размещает виджеты горизонтально, слева направо.
+    </p>
+    <span class="code-label">horizontal_layout.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Горизонтальная компоновка")
+        
+        layout = QHBoxLayout()
+        layout.addWidget(Color("red"))
+        layout.addWidget(Color("green"))
+        layout.addWidget(Color("blue"))
+        
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+    <div class="demo-note">
+      🎨 Результат: три цветных прямоугольника располагаются в ряд: красный, зелёный, синий.
+    </div>
+
+    <h2>Вложенные компоновки (Nesting Layouts)</h2>
+    <p>
+      Чтобы создавать сложные интерфейсы, компоновки можно вкладывать друг в друга с помощью 
+      метода <code>.addLayout()</code>. Следующий пример комбинирует вертикальные и горизонтальные компоновки.
+    </p>
+    <span class="code-label">nested_layout.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QVBoxLayout, QWidget
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Вложенные компоновки")
+        
+        main_layout = QHBoxLayout()
+        
+        left_column = QVBoxLayout()
+        left_column.addWidget(Color("red"))
+        left_column.addWidget(Color("yellow"))
+        
+        right_column = QVBoxLayout()
+        right_column.addWidget(Color("purple"))
+        right_column.addWidget(Color("blue"))
+        
+        main_layout.addLayout(left_column)
+        main_layout.addWidget(Color("green"))
+        main_layout.addLayout(right_column)
+        
+        widget = QWidget()
+        widget.setLayout(main_layout)
+        self.setCentralWidget(widget)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Настройка отступов и промежутков:</strong> 
+      <code>layout.setContentsMargins(0,0,0,0)</code> убирает внешние отступы, 
+      <code>layout.setSpacing(20)</code> задаёт расстояние между виджетами в пикселях.
+    </div>
+
+    <h2>QGridLayout — расположение в сетке</h2>
+    <p>
+      <code>QGridLayout</code> позволяет размещать виджеты в ячейках сетки, задавая номер строки и столбца. 
+      Это идеально подходит для создания форм и диалоговых окон.
+    </p>
+    <span class="code-label">grid_layout.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Сетка (Grid)")
+        
+        layout = QGridLayout()
+        layout.addWidget(Color("red"), 0, 0)    # строка 0, столбец 0
+        layout.addWidget(Color("green"), 1, 0)  # строка 1, столбец 0
+        layout.addWidget(Color("blue"), 1, 1)   # строка 1, столбец 1
+        layout.addWidget(Color("purple"), 2, 1) # строка 2, столбец 1
+        
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+    <div class="demo-note">
+      🎨 Результат: красный прямоугольник в левом верхнем углу (0,0). 
+      Зелёный под ним (1,0). Синий справа от зелёного (1,1). 
+      Фиолетовый под синим (2,1). Пустая ячейка (0,1) остаётся незаполненной.
+    </div>
+
+    <h2>QStackedLayout и QStackedWidget — переключение виджетов</h2>
+    <p>
+      <code>QStackedLayout</code> (и его готовый аналог <code>QStackedWidget</code>) 
+      размещает виджеты друг над другом (по оси Z), показывая только один за раз. 
+      Это основа для интерфейсов с вкладками, мастеров установки и пошаговых диалогов.
+    </p>
+    <span class="code-label">stacked_with_buttons.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QHBoxLayout, QPushButton,
+    QStackedLayout, QVBoxLayout, QWidget
+)
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("QStackedLayout")
+        
+        page_layout = QVBoxLayout()
+        btn_layout = QHBoxLayout()
+        self.stack = QStackedLayout()
+        
+        # Кнопки для переключения
+        btn_red = QPushButton("Красный")
+        btn_red.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        btn_green = QPushButton("Зелёный")
+        btn_green.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        btn_blue = QPushButton("Синий")
+        btn_blue.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+        
+        btn_layout.addWidget(btn_red)
+        btn_layout.addWidget(btn_green)
+        btn_layout.addWidget(btn_blue)
+        
+        self.stack.addWidget(Color("red"))
+        self.stack.addWidget(Color("green"))
+        self.stack.addWidget(Color("blue"))
+        
+        page_layout.addLayout(btn_layout)
+        page_layout.addLayout(self.stack)
+        
+        widget = QWidget()
+        widget.setLayout(page_layout)
+        self.setCentralWidget(widget)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <h3>QTabWidget — готовые вкладки</h3>
+    <p>
+      Qt предоставляет удобный виджет <code>QTabWidget</code>, который реализует вкладки «из коробки»:
+    </p>
+    <span class="code-label">tabwidget_demo.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget
+from layout_colorwidget import Color
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Вкладки (QTabWidget)")
+        
+        tabs = QTabWidget()
+        tabs.setTabPosition(QTabWidget.West)   # Вкладки слева
+        tabs.setMovable(True)                  # Вкладки можно перетаскивать
+        
+        tabs.addTab(Color("red"), "Красный")
+        tabs.addTab(Color("green"), "Зелёный")
+        tabs.addTab(Color("blue"), "Синий")
+        tabs.addTab(Color("yellow"), "Жёлтый")
+        
+        self.setCentralWidget(tabs)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+    <div class="demo-note">
+      🎨 Результат: окно с четырьмя вкладками. Положение вкладок можно настроить с помощью 
+      <code>setTabPosition()</code> (North, South, West, East), а перетаскивание вкладок — 
+      методом <code>setMovable(True)</code>.
+    </div>
+
+    <div class="note">
+      <strong>Итог лекции:</strong> Компоновки — это фундамент построения интерфейсов. 
+      <code>QVBoxLayout</code> и <code>QHBoxLayout</code> создают линейные структуры, 
+      <code>QGridLayout</code> — таблицы (формы), а <code>QStackedLayout</code>/<code>QTabWidget</code> — 
+      интерфейсы с переключением страниц. Вложенность компоновок позволяет реализовать 
+      интерфейс любой сложности без жёсткой привязки к координатам.
+    </div>
+
+    <div class="questions-block">
+      <h2>Контрольные вопросы</h2>
+      <ol>
+        <li>Какие четыре базовые компоновки предоставляет Qt? Чем они отличаются?</li>
+        <li>Почему для установки компоновки в <code>QMainWindow</code> нужен промежуточный <code>QWidget</code>?</li>
+        <li>Как создать компоновку, в которой первый столбец — три виджета вертикально, а второй — один большой виджет?</li>
+        <li>Какими методами можно управлять отступами и расстоянием между элементами компоновки?</li>
+        <li>Как добавить виджет в <code>QGridLayout</code> на позицию (строка=2, столбец=0)?</li>
+        <li>В чём разница между <code>QStackedLayout</code> и <code>QTabWidget</code>?</li>
+        <li>Как сделать вкладки перетаскиваемыми и изменить их расположение (сверху, снизу, слева, справа)?</li>
+        <li>Можно ли вкладывать компоновки друг в друга? Приведите пример.</li>
+        <li>Что произойдёт, если добавить виджет в <code>QVBoxLayout</code>, а затем вызвать <code>layout.addStretch()</code>?</li>
+        <li>Какой метод отвечает за переключение активного виджета в <code>QStackedLayout</code>?</li>
+      </ol>
+    </div>
+
+  </div>
+
+<div class="footer-nav">
+    <a class="btn btn-outline" href="../main_page.html">← На главную</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-lab" href="../labs.html">Перейти к заданиям →</a>
+      <div style="display:flex; gap:10px;">
+        <a class="btn btn-outline" href="2.html">← Лекция 2</a>
+        <a class="btn btn-next" href="4.html">Лекция 4 →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  const btn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+</script>
+</body>
+</html>

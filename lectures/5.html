@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Лекция 5 — Диалоговые окна (QDialog)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent; cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 780px; margin: 0 auto;
+      padding: 56px 24px 100px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .lecture-header { margin-bottom: 52px; }
+    .lecture-kicker {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .lecture-kicker::before {
+      content: ''; display: inline-block;
+      width: 20px; height: 1px; background: var(--accent);
+    }
+    .lecture-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700; color: var(--text-bright);
+      line-height: 1.25; margin-bottom: 24px;
+    }
+    .lecture-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .lecture-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .content h2 {
+      font-family: var(--serif); font-size: 22px; font-weight: 700;
+      color: var(--text-bright); margin: 48px 0 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .content h3 {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin: 36px 0 12px;
+    }
+    .content h4 {
+      font-family: var(--serif); font-size: 17px; font-weight: 600;
+      color: var(--text-bright); margin: 28px 0 10px;
+    }
+    .content p {
+      color: var(--text); margin-bottom: 16px; font-size: 15.5px;
+    }
+    .content strong { color: var(--text-bright); font-weight: 600; }
+    .content em { color: var(--accent); font-style: italic; }
+
+    .content ul, .content ol {
+      margin: 0 0 20px 0; padding-left: 0;
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .content ul li, .content ol li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: var(--text);
+    }
+    .content ul li::before {
+      content: '—'; color: var(--accent); font-family: var(--mono);
+      font-size: 12px; padding-top: 4px; flex-shrink: 0;
+    }
+    .content ol { counter-reset: ol-counter; }
+    .content ol li { counter-increment: ol-counter; }
+    .content ol li::before {
+      content: counter(ol-counter) '.';
+      color: var(--accent); font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      min-width: 20px; padding-top: 4px; flex-shrink: 0;
+    }
+
+    .content pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 20px 20px 20px 22px;
+      overflow-x: auto;
+      margin: 20px 0 24px;
+      position: relative;
+    }
+    .content pre code {
+      font-family: var(--mono); font-size: 13px;
+      line-height: 1.7; color: #a8c4ff;
+      white-space: pre;
+    }
+    .content code:not(pre code) {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--accent-dim); color: var(--accent);
+      padding: 1px 6px; border-radius: 3px;
+    }
+    .code-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 6px; display: block;
+    }
+
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent3);
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .note strong { color: var(--accent3); }
+
+    .table-flags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 20px 0 24px;
+      overflow-x: auto;
+    }
+    .table-flags table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .table-flags th, .table-flags td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-flags th {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .table-flags tr:last-child td {
+      border-bottom: none;
+    }
+    .table-flags td code {
+      background: transparent;
+      padding: 0;
+      font-size: 11px;
+    }
+
+    .questions-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 28px 24px;
+      margin-top: 56px;
+    }
+    .questions-block h2 {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); margin: 0 0 20px;
+      padding: 0; border: none;
+    }
+    .questions-block ol {
+      margin: 0; gap: 12px;
+    }
+    .questions-block ol li {
+      font-size: 14px; color: var(--text); line-height: 1.6;
+    }
+
+    .footer-nav {
+      margin-top: 64px; padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-lab {
+      background: var(--accent3); color: #0a1510;
+    }
+    .btn-lab:hover { background: #6fdfb5; transform: translateY(-1px); }
+    .btn-next {
+      background: var(--accent); color: #0d0f14;
+    }
+    .btn-next:hover { background: #7ab2ff; transform: translateY(-1px); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 38px; height: 38px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--text-dim);
+      transition: all 0.2s; z-index: 50;
+      opacity: 0; pointer-events: none;
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .page { padding: 36px 16px 80px; }
+      .topbar { padding: 10px 16px; }
+      .topbar-num { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="back-btn" href="../main_page.html">← Назад</a>
+  <span class="topbar-badge">PyQt6 · PySide6</span>
+  <span class="topbar-num">Лекция 05 / 07</span>
+</nav>
+
+<div class="page">
+
+  <header class="lecture-header">
+    <div class="lecture-kicker">Лекция 5</div>
+    <h1 class="lecture-title">Диалоговые окна:<br>QDialog и взаимодействие с пользователем</h1>
+    <div class="lecture-meta">
+      <span>📋 Темы: QDialog, модальные окна, QDialogButtonBox, accept/reject</span>
+      <span>⏱ ~30 мин</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <h2>Что такое диалоговые окна?</h2>
+    <p>
+      Диалоговые окна — это небольшие окна, которые используются для взаимодействия с пользователем: 
+      запрос подтверждения, ввод данных, выбор файла, настройки приложения. 
+      В Qt диалоговые окна реализуются классом <code>QDialog</code>.
+    </p>
+    <p>
+      Ключевая особенность большинства диалогов — <strong>модальность</strong>. 
+      Модальное диалоговое окно блокирует взаимодействие с родительским окном, пока не будет закрыто. 
+      Это заставляет пользователя ответить на вопрос диалога, прежде чем продолжить работу.
+    </p>
+
+    <div class="note">
+      <strong>Важно:</strong> В Qt есть два основных типа модальности:
+      <ul style="margin-top: 8px;">
+        <li><strong>Модальное относительно приложения</strong> — блокирует все окна приложения</li>
+        <li><strong>Модальное относительно окна</strong> — блокирует только родительское окно (наиболее распространено)</li>
+      </ul>
+    </div>
+
+    <h2>Простое диалоговое окно</h2>
+    <p>
+      Начнём с базового приложения, которое открывает пустой диалог при нажатии кнопки.
+    </p>
+    <span class="code-label">simple_dialog.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Моё приложение")
+        
+        button = QPushButton("Открыть диалог")
+        button.clicked.connect(self.button_clicked)
+        self.setCentralWidget(button)
+    
+    def button_clicked(self):
+        dlg = QDialog(self)           # Передаём self как родителя
+        dlg.setWindowTitle("Диалог")
+        dlg.exec()                    # Запускаем модальный диалог
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+    <div class="demo-note">
+      🎨 Результат: при нажатии на кнопку появляется пустое диалоговое окно поверх главного окна. 
+      Пока диалог открыт, главное окно недоступно.
+    </div>
+
+    <h2>Создание собственного диалога (подкласс QDialog)</h2>
+    <p>
+      Для создания полноценных диалогов лучше наследоваться от <code>QDialog</code> и настраивать 
+      его в методе <code>__init__</code>. Добавим текстовую метку и кнопки OK/Cancel.
+    </p>
+    <span class="code-label">custom_dialog.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets (
+    QApplication, QDialog, QMainWindow, QPushButton,
+    QVBoxLayout, QLabel, QDialogButtonBox
+)
+
+class CustomDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Подтверждение")
+        
+        # Создаём содержимое диалога
+        message = QLabel("Вы уверены, что хотите продолжить?")
+        
+        # Создаём кнопки OK и Cancel
+        buttons = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.button_box = QDialogButtonBox(buttons)
+        
+        # Подключаем сигналы кнопок к методам accept/reject
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        
+        # Компоновка
+        layout = QVBoxLayout()
+        layout.addWidget(message)
+        layout.addWidget(self.button_box)
+        self.setLayout(layout)
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Моё приложение")
+        
+        button = QPushButton("Открыть диалог")
+        button.clicked.connect(self.button_clicked)
+        self.setCentralWidget(button)
+    
+    def button_clicked(self):
+        dlg = CustomDialog(self)
+        if dlg.exec():          # exec() возвращает QDialog.Accepted или QDialog.Rejected
+            print("Пользователь нажал OK")
+        else:
+            print("Пользователь нажал Cancel или закрыл окно")
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <h3>Как работает QDialogButtonBox</h3>
+    <p>
+      <code>QDialogButtonBox</code> — это специальный виджет, который автоматически размещает 
+      стандартные кнопки диалога в правильном порядке для каждой платформы.
+    </p>
+    <div class="table-flags">
+      <table>
+        <thead><tr><th>Кнопка</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>QDialogButtonBox.Ok</code></td><td>Кнопка "OK" (подтверждение)</td></tr>
+          <tr><td><code>QDialogButtonBox.Cancel</code></td><td>Кнопка "Отмена"</td></tr>
+          <tr><td><code>QDialogButtonBox.Yes</code></td><td>Кнопка "Да"</td></tr>
+          <tr><td><code>QDialogButtonBox.No</code></td><td>Кнопка "Нет"</td></tr>
+          <tr><td><code>QDialogButtonBox.Save</code></td><td>Кнопка "Сохранить"</td></tr>
+          <tr><td><code>QDialogButtonBox.Open</code></td><td>Кнопка "Открыть"</td></tr>
+          <tr><td><code>QDialogButtonBox.Close</code></td><td>Кнопка "Закрыть"</td></tr>
+          <tr><td><code>QDialogButtonBox.Apply</code></td><td>Кнопка "Применить"</td></tr>
+          <tr><td><code>QDialogButtonBox.Reset</code></td><td>Кнопка "Сбросить"</td></tr>
+          <tr><td><code>QDialogButtonBox.Help</code></td><td>Кнопка "Справка"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Комбинировать кнопки можно с помощью оператора <code>|</code>:
+    </p>
+    <pre><code>buttons = QDialogButtonBox.Yes | QDialogButtonBox.No | QDialogButtonBox.Cancel</code></pre>
+
+    <h2>Встроенные диалоги Qt</h2>
+    <p>
+      Qt предоставляет готовые диалоги для самых частых задач. Это избавляет вас от необходимости 
+      создавать их с нуля и обеспечивает нативный внешний вид.
+    </p>
+
+    <h3>QMessageBox — диалог с сообщением</h3>
+    <span class="code-label">messagebox_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QMessageBox
+
+# Внутри метода MainWindow:
+def show_message(self):
+    reply = QMessageBox.question(
+        self,
+        "Подтверждение",
+        "Вы действительно хотите выйти?",
+        QMessageBox.Yes | QMessageBox.No,
+        QMessageBox.No  # Кнопка по умолчанию
+    )
+    
+    if reply == QMessageBox.Yes:
+        print("Пользователь подтвердил")
+        self.close()
+    else:
+        print("Отменено")</code></pre>
+    <p>
+      Типы сообщений в <code>QMessageBox</code>:
+    </p>
+    <ul>
+      <li><code>QMessageBox.information()</code> — информационное сообщение (синий значок "i")</li>
+      <li><code>QMessageBox.warning()</code> — предупреждение (жёлтый треугольник)</li>
+      <li><code>QMessageBox.critical()</code> — критическая ошибка (красный крест)</li>
+      <li><code>QMessageBox.question()</code> — вопрос с вариантами ответа</li>
+      <li><code>QMessageBox.about()</code> — диалог "О программе"</li>
+    </ul>
+
+    <h3>QFileDialog — выбор файлов и папок</h3>
+    <span class="code-label">filedialog_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QFileDialog
+
+# Открытие файла
+def open_file(self):
+    file_path, _ = QFileDialog.getOpenFileName(
+        self,
+        "Открыть файл",
+        "",  # Начальная директория
+        "Текстовые файлы (*.txt);;Все файлы (*.*)"
+    )
+    if file_path:
+        print(f"Выбран файл: {file_path}")
+
+# Сохранение файла
+def save_file(self):
+    file_path, _ = QFileDialog.getSaveFileName(
+        self,
+        "Сохранить файл",
+        "безымянный.txt",
+        "Текстовые файлы (*.txt)"
+    )
+    if file_path:
+        print(f"Сохранение в: {file_path}")
+
+# Выбор папки
+def open_folder(self):
+    folder_path = QFileDialog.getExistingDirectory(
+        self,
+        "Выбрать папку",
+        ""
+    )
+    if folder_path:
+        print(f"Выбрана папка: {folder_path}")
+
+# Выбор нескольких файлов
+def open_multiple_files(self):
+    files, _ = QFileDialog.getOpenFileNames(
+        self,
+        "Выбрать файлы",
+        "",
+        "Изображения (*.png *.jpg *.bmp)"
+    )
+    print(f"Выбрано файлов: {len(files)}")</code></pre>
+
+    <h3>QColorDialog — выбор цвета</h3>
+    <span class="code-label">colordialog_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QColorDialog
+from PySide6.QtGui import QColor
+
+def pick_color(self):
+    color = QColorDialog.getColor()
+    if color.isValid():
+        print(f"Выбран цвет: {color.name()}")  # выводит #RRGGBB
+        # Применить цвет к виджету:
+        # self.label.setStyleSheet(f"background-color: {color.name()}")</code></pre>
+
+    <h3>QFontDialog — выбор шрифта</h3>
+    <span class="code-label">fontdialog_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QFontDialog
+
+def pick_font(self):
+    ok, font = QFontDialog.getFont()
+    if ok:
+        print(f"Выбран шрифт: {font.family()}, размер {font.pointSize()}")
+        # Применить шрифт к виджету:
+        # self.label.setFont(font)</code></pre>
+
+    <h3>QInputDialog — простой ввод данных</h3>
+    <span class="code-label">inputdialog_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QInputDialog
+
+# Ввод текста
+def get_text(self):
+    text, ok = QInputDialog.getText(
+        self,
+        "Ввод текста",
+        "Введите ваше имя:"
+    )
+    if ok and text:
+        print(f"Привет, {text}!")
+
+# Ввод числа
+def get_number(self):
+    value, ok = QInputDialog.getInt(
+        self,
+        "Выбор числа",
+        "Введите возраст:",
+        min=0, max=120, step=1
+    )
+    if ok:
+        print(f"Возраст: {value}")
+
+# Выбор из списка
+def choose_item(self):
+    items = ["Красный", "Зелёный", "Синий"]
+    item, ok = QInputDialog.getItem(
+        self,
+        "Выбор цвета",
+        "Выберите цвет:",
+        items,
+        current=0,
+        editable=False
+    )
+    if ok and item:
+        print(f"Выбран цвет: {item}")</code></pre>
+
+    <h2>Полный пример: настройки приложения</h2>
+    <span class="code-label">settings_dialog.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
+    QDialog, QDialogButtonBox, QLineEdit, QSpinBox, QCheckBox, QWidget
+)
+
+class SettingsDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Настройки")
+        
+        # Поля ввода
+        self.name_edit = QLineEdit()
+        self.age_spin = QSpinBox()
+        self.age_spin.setRange(0, 150)
+        self.notify_check = QCheckBox("Уведомления")
+        
+        # Кнопки
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        
+        # Компоновка
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Имя:"))
+        layout.addWidget(self.name_edit)
+        layout.addWidget(QLabel("Возраст:"))
+        layout.addWidget(self.age_spin)
+        layout.addWidget(self.notify_check)
+        layout.addWidget(button_box)
+        self.setLayout(layout)
+    
+    def get_data(self):
+        return {
+            "name": self.name_edit.text(),
+            "age": self.age_spin.value(),
+            "notify": self.notify_check.isChecked()
+        }
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Приложение с настройками")
+        
+        self.label = QLabel("Настройки не загружены")
+        self.label.setAlignment(Qt.AlignCenter)
+        
+        button = QPushButton("Настройки")
+        button.clicked.connect(self.open_settings)
+        
+        container = QWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(button)
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+    
+    def open_settings(self):
+        dlg = SettingsDialog(self)
+        if dlg.exec():
+            data = dlg.get_data()
+            self.label.setText(
+                f"Имя: {data['name']}, Возраст: {data['age']}, "
+                f"Уведомления: {'Вкл' if data['notify'] else 'Выкл'}"
+            )
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Итог лекции:</strong> Диалоговые окна — неотъемлемая часть любого серьёзного GUI-приложения. 
+      <code>QDialog</code> предоставляет гибкую основу для создания собственных диалогов, 
+      а встроенные классы (<code>QMessageBox</code>, <code>QFileDialog</code>, <code>QColorDialog</code> и др.) 
+      покрывают 90% повседневных задач. Передавайте <code>parent</code> в диалог, чтобы он автоматически 
+      центрировался относительно родительского окна.
+    </div>
+
+    <div class="questions-block">
+      <h2>Контрольные вопросы</h2>
+      <ol>
+        <li>Что такое модальное диалоговое окно и чем оно отличается от немодального?</li>
+        <li>Какой метод запускает модальный диалог и что он возвращает?</li>
+        <li>Зачем нужно передавать parent в конструктор <code>QDialog</code>?</li>
+        <li>Какие два стандартных слота есть у <code>QDialog</code> для закрытия с результатом?</li>
+        <li>Что такое <code>QDialogButtonBox</code> и для чего он используется?</li>
+        <li>Как создать диалог с кнопками "Да", "Нет", "Отмена"?</li>
+        <li>Какие типы сообщений предоставляет <code>QMessageBox</code>?</li>
+        <li>Как открыть диалог выбора файла и получить путь к выбранному файлу?</li>
+        <li>Какой диалог используется для выбора цвета и как проверить, что цвет выбран корректно?</li>
+        <li>Чем отличается <code>dlg.exec()</code> от <code>dlg.show()</code> при работе с диалогами?</li>
+      </ol>
+    </div>
+
+  </div>
+
+<div class="footer-nav">
+    <a class="btn btn-outline" href="../main_page.html">← На главную</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-lab" href="../labs.html">Перейти к заданиям →</a>
+      <div style="display:flex; gap:10px;">
+        <a class="btn btn-outline" href="4.html">← Лекция 4</a>
+        <a class="btn btn-next" href="6.html">Лекция 6 →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  const btn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+</script>
+</body>
+</html>

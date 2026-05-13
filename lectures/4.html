@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Лекция 4 — Действия (Actions), панели инструментов и меню</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent; cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 780px; margin: 0 auto;
+      padding: 56px 24px 100px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .lecture-header { margin-bottom: 52px; }
+    .lecture-kicker {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .lecture-kicker::before {
+      content: ''; display: inline-block;
+      width: 20px; height: 1px; background: var(--accent);
+    }
+    .lecture-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700; color: var(--text-bright);
+      line-height: 1.25; margin-bottom: 24px;
+    }
+    .lecture-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .lecture-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .content h2 {
+      font-family: var(--serif); font-size: 22px; font-weight: 700;
+      color: var(--text-bright); margin: 48px 0 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .content h3 {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin: 36px 0 12px;
+    }
+    .content h4 {
+      font-family: var(--serif); font-size: 17px; font-weight: 600;
+      color: var(--text-bright); margin: 28px 0 10px;
+    }
+    .content p {
+      color: var(--text); margin-bottom: 16px; font-size: 15.5px;
+    }
+    .content strong { color: var(--text-bright); font-weight: 600; }
+    .content em { color: var(--accent); font-style: italic; }
+
+    .content ul, .content ol {
+      margin: 0 0 20px 0; padding-left: 0;
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .content ul li, .content ol li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: var(--text);
+    }
+    .content ul li::before {
+      content: '—'; color: var(--accent); font-family: var(--mono);
+      font-size: 12px; padding-top: 4px; flex-shrink: 0;
+    }
+    .content ol { counter-reset: ol-counter; }
+    .content ol li { counter-increment: ol-counter; }
+    .content ol li::before {
+      content: counter(ol-counter) '.';
+      color: var(--accent); font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      min-width: 20px; padding-top: 4px; flex-shrink: 0;
+    }
+
+    .content pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 20px 20px 20px 22px;
+      overflow-x: auto;
+      margin: 20px 0 24px;
+      position: relative;
+    }
+    .content pre code {
+      font-family: var(--mono); font-size: 13px;
+      line-height: 1.7; color: #a8c4ff;
+      white-space: pre;
+    }
+    .content code:not(pre code) {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--accent-dim); color: var(--accent);
+      padding: 1px 6px; border-radius: 3px;
+    }
+    .code-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 6px; display: block;
+    }
+
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent3);
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .note strong { color: var(--accent3); }
+
+    .table-flags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 20px 0 24px;
+      overflow-x: auto;
+    }
+    .table-flags table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .table-flags th, .table-flags td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-flags th {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .table-flags tr:last-child td {
+      border-bottom: none;
+    }
+    .table-flags td code {
+      background: transparent;
+      padding: 0;
+      font-size: 11px;
+    }
+
+    .questions-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 28px 24px;
+      margin-top: 56px;
+    }
+    .questions-block h2 {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); margin: 0 0 20px;
+      padding: 0; border: none;
+    }
+    .questions-block ol {
+      margin: 0; gap: 12px;
+    }
+    .questions-block ol li {
+      font-size: 14px; color: var(--text); line-height: 1.6;
+    }
+
+    .footer-nav {
+      margin-top: 64px; padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-lab {
+      background: var(--accent3); color: #0a1510;
+    }
+    .btn-lab:hover { background: #6fdfb5; transform: translateY(-1px); }
+    .btn-next {
+      background: var(--accent); color: #0d0f14;
+    }
+    .btn-next:hover { background: #7ab2ff; transform: translateY(-1px); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 38px; height: 38px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--text-dim);
+      transition: all 0.2s; z-index: 50;
+      opacity: 0; pointer-events: none;
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .page { padding: 36px 16px 80px; }
+      .topbar { padding: 10px 16px; }
+      .topbar-num { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="back-btn" href="../main_page.html">← Назад</a>
+  <span class="topbar-badge">PyQt6 · PySide6</span>
+  <span class="topbar-num">Лекция 04 / 07</span>
+</nav>
+
+<div class="page">
+
+  <header class="lecture-header">
+    <div class="lecture-kicker">Лекция 4</div>
+    <h1 class="lecture-title">Действия (Actions),<br>панели инструментов и меню</h1>
+    <div class="lecture-meta">
+      <span>⚡ Темы: QToolBar, QAction, QMenuBar, QStatusBar, горячие клавиши</span>
+      <span>⏱ ~35 мин</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <h2>Панели инструментов (Toolbars)</h2>
+    <p>
+      Панели инструментов — это полосы с иконками и/или текстом, используемые для быстрого доступа 
+      к типовым задачам приложения. В Qt панели инструментов реализованы классом 
+      <code>QToolBar</code>. Добавить панель в <code>QMainWindow</code> очень просто:
+    </p>
+    <span class="code-label">simple_toolbar.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QToolBar
+from PySide6.QtCore import Qt
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        label = QLabel("Привет!")
+        label.setAlignment(Qt.AlignCenter)
+        self.setCentralWidget(label)
+        
+        toolbar = QToolBar("Моя главная панель")
+        self.addToolBar(toolbar)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Важно:</strong> Панели инструментов в <code>QMainWindow</code> можно перетаскивать, 
+      закреплять в разных местах и отключать. Это стандартное поведение Qt.
+    </div>
+
+    <h2>QAction — абстрактное действие</h2>
+    <p>
+      <code>QAction</code> — один из самых полезных классов в Qt. Он позволяет описать действие 
+      один раз, а затем использовать его в разных местах интерфейса: на панели инструментов, 
+      в меню, с горячей клавишей. <strong>Одно действие — много представлений.</strong>
+    </p>
+    <p>
+      Основные возможности <code>QAction</code>:
+    </p>
+    <ul>
+      <li>Текст (<code>setText()</code>) и иконка (<code>setIcon()</code>)</li>
+      <li>Подсказка статуса (<code>setStatusTip()</code>)</li>
+      <li>Горячая клавиша (<code>setShortcut()</code>)</li>
+      <li>Переключаемый режим (<code>setCheckable()</code>)</li>
+      <li>Сигнал <code>.triggered</code> — возникает при активации действия</li>
+    </ul>
+
+    <span class="code-label">action_demo.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QLabel, QToolBar, QStatusBar
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        label = QLabel("Привет!")
+        label.setAlignment(Qt.AlignCenter)
+        self.setCentralWidget(label)
+        
+        # Панель инструментов
+        toolbar = QToolBar("Главная панель")
+        self.addToolBar(toolbar)
+        
+        # Создаём действие
+        button_action = QAction("Моя кнопка", self)
+        button_action.setStatusTip("Это подсказка статуса")
+        button_action.triggered.connect(self.on_button_click)
+        button_action.setCheckable(True)   # переключаемый режим
+        
+        # Добавляем действие на панель инструментов
+        toolbar.addAction(button_action)
+        
+        # Строка состояния
+        self.setStatusBar(QStatusBar(self))
+    
+    def on_button_click(self, checked):
+        print("Нажато! Состояние переключателя:", checked)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <h3>Добавление разделителей и виджетов на панель</h3>
+    <p>
+      На панель инструментов можно добавлять не только действия, но и разделители (<code>addSeparator()</code>) 
+      и любые виджеты (<code>addWidget()</code>):
+    </p>
+    <pre><code>toolbar.addAction(button_action)
+toolbar.addSeparator()
+
+toolbar.addWidget(QLabel("Текст:"))
+toolbar.addWidget(QCheckBox())</code></pre>
+
+    <h2>Создание меню (Menus)</h2>
+    <p>
+      Главное меню создаётся через <code>menuBar()</code> у <code>QMainWindow</code>. 
+      Амперсанд (<code>&</code>) в названии меню задаёт клавишу быстрого доступа (Alt+буква).
+    </p>
+    <span class="code-label">menu_demo.py</span>
+    <pre><code>import sys
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QLabel, QToolBar, QStatusBar
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        label = QLabel("Привет!")
+        label.setAlignment(Qt.AlignCenter)
+        self.setCentralWidget(label)
+        
+        # Панель инструментов
+        toolbar = QToolBar("Главная панель")
+        self.addToolBar(toolbar)
+        
+        # Действие
+        button_action = QAction("&Моя кнопка", self)
+        button_action.setStatusTip("Это подсказка")
+        button_action.triggered.connect(self.on_button_click)
+        button_action.setCheckable(True)
+        
+        toolbar.addAction(button_action)
+        self.setStatusBar(QStatusBar(self))
+        
+        # Меню
+        menu = self.menuBar()
+        file_menu = menu.addMenu("&Файл")
+        file_menu.addAction(button_action)   # Переиспользуем действие!
+        
+        # Добавляем разделитель и второе действие
+        file_menu.addSeparator()
+        
+        another_action = QAction("&Выход", self)
+        another_action.triggered.connect(self.close)
+        file_menu.addAction(another_action)
+    
+    def on_button_click(self, checked):
+        print("Нажато!", checked)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Ключевая идея:</strong> Одно и то же действие <code>button_action</code> появляется 
+      и на панели инструментов, и в меню. Если действие переключаемое — оно остаётся таким везде.
+    </div>
+
+    <h3>Подменю (Submenus)</h3>
+    <p>
+      Подменю создаются вызовом <code>addMenu()</code> у существующего меню:
+    </p>
+    <pre><code>file_menu = menu.addMenu("&Файл")
+submenu = file_menu.addMenu("&Недавние")
+submenu.addAction("project1.py")
+submenu.addAction("project2.py")</code></pre>
+
+    <h2>Горячие клавиши (Shortcuts)</h2>
+    <p>
+      Горячая клавиша для действия задаётся методом <code>setShortcut()</code>. 
+      Qt поддерживает как текстовое описание (<code>"Ctrl+S"</code>), так и системно-независимые 
+      константы из <code>QKeySequence</code>:
+    </p>
+    <pre><code>from PySide6.QtGui import QKeySequence
+
+# Вариант 1: строка
+button_action.setShortcut("Ctrl+P")
+
+# Вариант 2: константа Qt
+from PySide6.QtCore import Qt
+button_action.setShortcut(Qt.CTRL | Qt.Key_P)
+
+# Вариант 3: стандартная последовательность
+button_action.setShortcut(QKeySequence.Print)</code></pre>
+    <p>
+      При использовании стандартных последовательностей (<code>QKeySequence.Copy</code>, <code>QKeySequence.Paste</code> и т.д.) 
+      Qt автоматически подставляет правильные сочетания клавиш для каждой платформы (Ctrl на Windows/Linux, Cmd на macOS).
+    </p>
+
+    <h2>Полный пример: панель инструментов + меню + статусная строка</h2>
+    <span class="code-label">full_example.py</span>
+    <pre><code>import sys
+import os
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QLabel, QToolBar, QStatusBar,
+    QCheckBox, QVBoxLayout, QWidget
+)
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QAction, QIcon, QKeySequence
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Моё приложение")
+        
+        # Центральный виджет
+        self.label = QLabel("Привет!")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.setCentralWidget(self.label)
+        
+        # Панель инструментов
+        toolbar = QToolBar("Главная панель")
+        toolbar.setIconSize(QSize(16, 16))
+        self.addToolBar(toolbar)
+        
+        # Действие 1 (переключаемое)
+        self.action1 = QAction("&Показать сообщение", self)
+        self.action1.setStatusTip("Выводит сообщение в консоль")
+        self.action1.triggered.connect(self.on_action_click)
+        self.action1.setCheckable(True)
+        self.action1.setShortcut(QKeySequence("Ctrl+M"))
+        
+        # Действие 2 (переключаемое)
+        self.action2 = QAction("&Очистить метку", self)
+        self.action2.setStatusTip("Очищает текст метки")
+        self.action2.triggered.connect(self.clear_label)
+        self.action2.setShortcut(QKeySequence("Ctrl+L"))
+        
+        toolbar.addAction(self.action1)
+        toolbar.addSeparator()
+        toolbar.addAction(self.action2)
+        toolbar.addWidget(QCheckBox("Опция"))
+        
+        # Строка состояния
+        self.setStatusBar(QStatusBar(self))
+        
+        # Меню
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu("&Файл")
+        file_menu.addAction(self.action1)
+        file_menu.addAction(self.action2)
+        file_menu.addSeparator()
+        
+        exit_action = QAction("&Выход", self)
+        exit_action.triggered.connect(self.close)
+        exit_action.setShortcut(QKeySequence.Quit)
+        file_menu.addAction(exit_action)
+        
+        edit_menu = menubar.addMenu("&Правка")
+        edit_menu.addAction(self.action1)
+        
+        # Подменю
+        recent_menu = file_menu.addMenu("&Недавние")
+        recent_menu.addAction("Документ 1")
+        recent_menu.addAction("Документ 2")
+    
+    def on_action_click(self, checked):
+        print("Действие активировано! Состояние:", checked)
+        if checked:
+            self.label.setText("Кнопка включена")
+        else:
+            self.label.setText("Кнопка выключена")
+    
+    def clear_label(self):
+        self.label.setText("Метка очищена")
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Итог лекции:</strong> <code>QAction</code> — это универсальный строительный блок для 
+      пользовательского ввода в Qt. Один раз определив действие (текст, иконку, горячую клавишу, 
+      подсказку), вы можете использовать его на панелях инструментов, в меню, в контекстных меню 
+      и в любых других местах. Это уменьшает дублирование кода и упрощает поддержку приложения.
+    </div>
+
+    <div class="questions-block">
+      <h2>Контрольные вопросы</h2>
+      <ol>
+        <li>Как добавить панель инструментов в <code>QMainWindow</code>?</li>
+        <li>Что такое <code>QAction</code> и в чём его основное преимущество?</li>
+        <li>Как сделать кнопку на панели инструментов переключаемой (toggle)?</li>
+        <li>Как добавить разделитель между элементами на панели инструментов или в меню?</li>
+        <li>Каким методом задаётся подсказка, отображаемая в строке состояния?</li>
+        <li>Как добавить меню в строку меню и как привязать к нему действие?</li>
+        <li>Что означает символ <code>&</code> (амперсанд) в названии меню или пункта?</li>
+        <li>Как создать подменю внутри существующего меню?</li>
+        <li>Какие три способа задать горячую клавишу для <code>QAction</code> вы знаете?</li>
+        <li>Почему <code>QAction</code> позволяет повторно использовать одно и то же действие в разных местах интерфейса?</li>
+      </ol>
+    </div>
+
+  </div>
+
+<div class="footer-nav">
+    <a class="btn btn-outline" href="../main_page.html">← На главную</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-lab" href="../labs.html">Перейти к заданиям →</a>
+      <div style="display:flex; gap:10px;">
+        <a class="btn btn-outline" href="3.html">← Лекция 3</a>
+        <a class="btn btn-next" href="5.html">Лекция 5 →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  const btn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+</script>
+</body>
+</html>

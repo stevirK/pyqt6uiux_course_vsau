@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Практические работы — PySide6 (7 работ по 30+ шагов)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent;
+      cursor: pointer;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 100px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .header-section {
+      margin-bottom: 48px;
+    }
+    .page-badge {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent3);
+      background: rgba(79, 209, 165, 0.12);
+      padding: 4px 12px;
+      border-radius: 30px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 16px;
+      line-height: 1.25;
+    }
+    .desc {
+      color: var(--text-dim);
+      border-left: 3px solid var(--accent);
+      padding-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    /* Сетка работ */
+    .works-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      margin-top: 20px;
+    }
+    .work-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .work-card:hover {
+      border-color: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+    .work-header {
+      background: var(--surface);
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .work-title {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .work-num {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 4px 12px;
+      border-radius: 30px;
+    }
+    .work-name {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+    .work-steps {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent3);
+      background: rgba(79,209,165,0.1);
+      padding: 4px 12px;
+      border-radius: 30px;
+    }
+    .work-content {
+      padding: 24px 28px;
+    }
+    .work-goal {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      border-left: 3px solid var(--accent3);
+      font-size: 14px;
+    }
+    .work-goal strong {
+      color: var(--accent3);
+    }
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 20px 0 16px;
+    }
+    .steps-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .steps-list li::before {
+      content: "▹";
+      color: var(--accent);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .step-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 12px;
+      text-align: right;
+    }
+    .expand-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .expand-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .full-steps {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border);
+    }
+    .full-steps.show {
+      display: block;
+    }
+    .full-steps ol {
+      list-style: none;
+      counter-reset: step-counter;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .full-steps ol li {
+      counter-increment: step-counter;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .full-steps ol li::before {
+      content: counter(step-counter);
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+    }
+    .footer-nav {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 42px; height: 42px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s;
+      color: var(--text-dim);
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 700px) {
+      .page { padding: 32px 16px 80px; }
+      .work-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<nav class="topbar">
+  <a class="back-btn" href="main_page.html">← На главную</a>
+  <span class="topbar-badge">PySide6 · Практикум</span>
+  <span class="topbar-num">7 работ</span>
+</nav>
+
+<div class="page">
+  <div class="header-section">
+    <div class="page-badge">📘 Комплексные практические работы</div>
+    <h1>7 практических работ<br>по курсу PySide6 / PyQt6</h1>
+    <div class="desc">
+      Каждая работа содержит <strong>30+ шагов</strong> и охватывает все ключевые темы лекции.<br>
+      Нажмите «Показать все шаги», чтобы увидеть детальный план выполнения.
+    </div>
+  </div>
+
+  <div class="works-grid">
+    <!-- РАБОТА 1. Лекция 1 -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 1</span>
+          <span class="work-name">Разработка первого GUI-приложения с настраиваемым интерфейсом</span>
+        </div>
+        <span class="work-steps">32 шага</span>
+      </div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать приложение-визитку с информацией о разработчике (имя, роль, контакты, кнопка закрытия). Закрепить основы окна, размеров, заголовков, центрального виджета и цикла событий.</div>
+        <button class="expand-btn" data-target="steps1">📋 Показать все шаги (32) ▼</button>
+        <div id="steps1" class="full-steps">
+          <ol>
+            <li>Создайте файл <code>business_card.py</code></li>
+            <li>Импортируйте модуль <code>sys</code></li>
+            <li>Импортируйте <code>QApplication</code>, <code>QMainWindow</code>, <code>QWidget</code>, <code>QLabel</code>, <code>QPushButton</code></li>
+            <li>Импортируйте <code>QSize</code> из <code>PySide6.QtCore</code></li>
+            <li>Импортируйте <code>QFont</code> и <code>Qt</code> из <code>PySide6.QtGui</code> и <code>QtCore</code></li>
+            <li>Создайте класс <code>BusinessCardWindow</code>, унаследованный от <code>QMainWindow</code></li>
+            <li>В <code>__init__</code> вызовите <code>super().__init__()</code></li>
+            <li>Установите заголовок окна: <code>"Визитка: Иванов Иван"</code></li>
+            <li>Установите фиксированный размер 450×350 через <code>setFixedSize(QSize(450, 350))</code></li>
+            <li>Создайте центральный виджет <code>central = QWidget()</code></li>
+            <li>Создайте метку <code>name_label = QLabel("Иванов Иван")</code></li>
+            <li>Создайте метку <code>role_label = QLabel("Студент направления Прикладная информатика")</code></li>
+            <li>Создайте метку <code>email_label = QLabel("Email: ivanov@example.com")</code></li>
+            <li>Создайте метку <code>phone_label = QLabel("Тел.: +7 (999) 123-45-67")</code></li>
+            <li>Создайте кнопку <code>close_button = QPushButton("Закрыть")</code></li>
+            <li>Настройте шрифт для имени: <code>font = QFont("Arial", 16, QFont.Bold)</code></li>
+            <li>Примените шрифт: <code>name_label.setFont(font)</code></li>
+            <li>Выровняйте текст по центру: <code>name_label.setAlignment(Qt.AlignCenter)</code></li>
+            <li>Выровняйте остальные метки по центру аналогично</li>
+            <li>Создайте вертикальную компоновку <code>layout = QVBoxLayout()</code></li>
+            <li>Добавьте <code>name_label</code> в компоновку</li>
+            <li>Добавьте <code>role_label</code>, <code>email_label</code>, <code>phone_label</code>, <code>close_button</code></li>
+            <li>Установите расстояние между элементами: <code>layout.setSpacing(15)</code></li>
+            <li>Установите отступы: <code>layout.setContentsMargins(20, 20, 20, 20)</code></li>
+            <li>Примените компоновку к центральному виджету: <code>central.setLayout(layout)</code></li>
+            <li>Установите центральный виджет: <code>self.setCentralWidget(central)</code></li>
+            <li>Подключите сигнал кнопки: <code>close_button.clicked.connect(self.close)</code></li>
+            <li>Создайте экземпляр <code>QApplication(sys.argv)</code></li>
+            <li>Создайте объект окна: <code>window = BusinessCardWindow()</code></li>
+            <li>Вызовите <code>window.show()</code></li>
+            <li>Запустите цикл событий: <code>app.exec()</code></li>
+            <li>Протестируйте: окно должно отображать визитку, кнопка закрывает приложение.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 32 шага</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 2. Лекция 2 -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title"><span class="work-num">Лекция 2</span><span class="work-name">Интерактивная анкета с сигналами и слотами</span></div>
+        <span class="work-steps">35 шагов</span>
+      </div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать анкету с QLabel, QLineEdit, QComboBox, QCheckBox и кнопками. При нажатии «Показать информацию» выводить собранные данные в консоль и на метку.</div>
+        <button class="expand-btn" data-target="steps2">📋 Показать все шаги (35) ▼</button>
+        <div id="steps2" class="full-steps"><ol><li>Создайте файл <code>interactive_form.py</code></li><li>Импортируйте <code>sys</code>, <code>QApplication</code>, <code>QMainWindow</code>, <code>QWidget</code>, <code>QVBoxLayout</code>, <code>QHBoxLayout</code></li><li>Импортируйте <code>QLabel</code>, <code>QPushButton</code>, <code>QCheckBox</code>, <code>QComboBox</code>, <code>QLineEdit</code></li><li>Импортируйте <code>Qt</code> из <code>PySide6.QtCore</code></li><li>Создайте класс <code>InteractiveForm</code>, унаследованный от <code>QMainWindow</code></li><li>Установите заголовок <code>"Интерактивная анкета"</code> и размер 500×450</li><li>Создайте центральный виджет и вертикальную компоновку</li><li>Добавьте метку <code>"Регистрация пользователя"</code> с размером шрифта 18</li><li>Добавьте метку <code>"Ваше имя:"</code> и поле ввода <code>QLineEdit</code></li><li>Добавьте метку <code>"Ваш возраст:"</code> и поле ввода <code>QLineEdit</code></li><li>Добавьте метку <code>"Любимый язык программирования:"</code> и <code>QComboBox</code></li><li>Наполните комбобокс: Python, C++, JavaScript, Java, Go</li><li>Добавьте <code>QCheckBox</code> с текстом <code>"Согласен на обработку данных"</code></li><li>Добавьте кнопки <code>"Показать информацию"</code> и <code>"Очистить"</code></li><li>Добавьте метку <code>"Результат:"</code> с жирным шрифтом и метку <code>result_label</code></li><li>Подключите <code>clicked</code> первой кнопки к <code>show_info</code></li><li>Подключите <code>clicked</code> второй кнопки к <code>clear_form</code></li><li>В <code>show_info</code> получите текст из поля имени</li><li>Получите текст из поля возраста</li><li>Получите выбранный элемент из комбобокса</li><li>Получите состояние чекбокса через <code>isChecked()</code></li><li>Проверьте, что имя не пустое, иначе выведите предупреждение</li><li>Проверьте, что возраст — число (используйте <code>isdigit()</code>)</li><li>Сформируйте строку результата со всей информацией</li><li>Если чекбокс не отмечен, добавьте предупреждение в результат</li><li>Выведите результат в <code>result_label</code> и в консоль</li><li>В <code>clear_form</code> очистите поле имени и возраста (<code>setText("")</code>)</li><li>Сбросьте выбранный индекс комбобокса на 0</li><li>Снимите отметку чекбокса (<code>setChecked(False)</code>)</li><li>Очистите <code>result_label.setText("")</code></li><li>Добавьте обработку возраста через <code>try/except</code> для надёжности</li><li>Добавьте подсказки к полям (<code>setPlaceholderText</code>)</li><li>Подключите также изменение комбобокса для вывода в консоль выбранного языка</li><li>Запустите приложение, проверьте все сценарии</li><li>Убедитесь, что при пустых полях выводится сообщение об ошибке.</li></ol><div class="step-count">✅ Итого: 35 шагов</div></div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 3. Лекция 3 -->
+    <div class="work-card">
+      <div class="work-header"><div class="work-title"><span class="work-num">Лекция 3</span><span class="work-name">Конструктор интерфейсов с вложенными компоновками</span></div><span class="work-steps">34 шага</span></div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать панель управления с QTabWidget, QStackedLayout, QGridLayout и вложенными компоновками. Переключение между режимами через кнопки.</div>
+        <button class="expand-btn" data-target="steps3">📋 Показать все шаги (34) ▼</button>
+        <div id="steps3" class="full-steps"><ol><li>Создайте файл <code>layout_dashboard.py</code></li><li>Импортируйте все виджеты компоновок и <code>QTabWidget</code></li><li>Создайте класс <code>ColorWidget</code> для цветных блоков</li><li>Создайте класс <code>DashboardWindow(QMainWindow)</code></li><li>Установите заголовок и размер 700×500</li><li>Создайте центральный виджет и главную вертикальную компоновку</li><li>Создайте горизонтальную панель с кнопками: «Вкладки», «Стек», «Сетка»</li><li>Создайте центральный <code>QStackedLayout</code></li><li>Создайте страницу 1: <code>QTabWidget</code> с тремя вкладками (цветные виджеты)</li><li>Настройте вкладки: <code>setTabPosition(QTabWidget.West)</code>, <code>setMovable(True)</code></li><li>Добавьте таб-виджет в стек (индекс 0)</li><li>Создайте страницу 2: <code>QGridLayout</code> 4×4 с цветными виджетами</li><li>Добавьте вторую страницу в стек (индекс 1)</li><li>Создайте страницу 3: сложная вложенная компоновка (горизонтальная + две вертикальные)</li><li>Добавьте третью страницу в стек (индекс 2)</li><li>Добавьте стеки в главную вертикальную компоновку</li><li>Создайте нижнюю панель с индикатором режима (<code>QLabel</code>)</li><li>Подключите кнопки переключения к <code>setCurrentIndex</code> стека</li><li>Обновляйте текст режима при переключении</li><li>Настройте растяжение: <code>main_layout.setStretch(1, 1)</code></li><li>Добавьте разделители между панелями</li><li>Установите отступы и расстояния</li><li>Протестируйте переключение между тремя режимами</li><li>Добавьте дополнительные цвета в виджеты</li><li>Убедитесь, что вкладки можно перетаскивать</li><li>Сделайте так, чтобы при наведении на кнопки менялся курсор</li><li>Добавьте обработку изменения выбранной вкладки</li><li>В строку состояния выводите информацию о выбранной странице</li><li>Оформите цветные виджеты с рамкой</li><li>Проверьте адаптивность при изменении размера окна</li><li>Добавьте кнопку «Сбросить вид» (возврат к вкладкам)</li><li>Создайте отдельный файл <code>color_widget.py</code> и импортируйте</li><li>Добавьте комментарии к каждому методу</li><li>Запустите и протестируйте все переходы.</li></ol><div class="step-count">✅ Итого: 34 шага</div></div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 4. Лекция 4 -->
+    <div class="work-card">
+      <div class="work-header"><div class="work-title"><span class="work-num">Лекция 4</span><span class="work-name">Текстовый редактор с меню, панелями инструментов и действиями</span></div><span class="work-steps">38 шагов</span></div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Разработать простой текстовый редактор с меню «Файл», «Правка», «Справка», панелью инструментов, статусной строкой и горячими клавишами.</div>
+        <button class="expand-btn" data-target="steps4">📋 Показать все шаги (38) ▼</button>
+        <div id="steps4" class="full-steps"><ol><li>Создайте <code>text_editor.py</code></li><li>Импортируйте <code>QApplication</code>, <code>QMainWindow</code>, <code>QTextEdit</code>, <code>QToolBar</code>, <code>QStatusBar</code></li><li>Импортируйте <code>QAction</code>, <code>QFileDialog</code>, <code>QMessageBox</code>, <code>QKeySequence</code></li><li>Создайте класс <code>TextEditor(QMainWindow)</code></li><li>Установите заголовок и размер 800×600</li><li>Установите центральный виджет <code>QTextEdit</code></li><li>Создайте строку состояния с сообщением «Готов»</li><li>Создайте меню «&Файл»</li><li>Создайте действие «&Новый» (Ctrl+N) с подключением к <code>new_file</code></li><li>Создайте действие «&Открыть...» (Ctrl+O) → <code>open_file</code></li><li>Создайте действие «&Сохранить» (Ctrl+S) → <code>save_file</code></li><li>Создайте действие «Сохранить &как...» (Ctrl+Shift+S) → <code>save_as</code></li><li>Добавьте разделитель и действие «&Выход» (Ctrl+Q) → <code>self.close</code></li><li>Создайте меню «&Правка» с действиями Отменить, Повторить, Вырезать, Копировать, Вставить, Выделить всё</li><li>Подключите действия к встроенным слотам <code>QTextEdit</code></li><li>Создайте меню «&Справка» с действием «&О программе» → <code>about</code></li><li>Создайте <code>QToolBar("Главная панель")</code>, добавьте Новый, Открыть, Сохранить</li><li>Добавьте разделитель, затем Вырезать, Копировать, Вставить</li><li>Сделайте панель перемещаемой</li><li>Реализуйте <code>new_file</code>: очистить текст, сбросить текущий файл</li><li>Реализуйте <code>open_file</code>: диалог открытия, чтение файла, установка заголовка</li><li>Обработайте ошибки чтения через <code>try/except</code></li><li>Реализуйте <code>save_file</code>: если путь есть — сохранить, иначе вызвать <code>save_as</code></li><li>Реализуйте <code>save_as</code>: диалог сохранения, запись файла</li><li>Реализуйте <code>about</code>: <code>QMessageBox.about</code> с информацией</li><li>Подключите сигнал <code>textChanged</code> к обновлению статуса (счётчик символов)</li><li>Обновляйте строку состояния при каждом изменении текста</li><li>Добавьте иконки для действий (можно текстовые)</li><li>Добавьте дополнительные клавиши: Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Q</li><li>Сделайте так, чтобы при закрытии проверялись несохранённые изменения</li><li>Добавьте индикатор изменения документа (звёздочка в заголовке)</li><li>Создайте диалог подтверждения при выходе с несохранёнными данными</li><li>Добавьте действие «Сохранить все» (если несколько документов — расширение)</li><li>Настройте шрифт текстовой области по умолчанию</li><li>Добавьте возможность выбора шрифта через меню (опционально)</li><li>Протестируйте все пункты меню и горячие клавиши</li><li>Проверьте работу строки состояния (количество символов, слов)</li><li>Запустите и создайте несколько файлов, сохраните, откройте.</li></ol><div class="step-count">✅ Итого: 38 шагов</div></div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 5. Лекция 5 -->
+    <div class="work-card">
+      <div class="work-header"><div class="work-title"><span class="work-num">Лекция 5</span><span class="work-name">Приложение с настройками и диалогами</span></div><span class="work-steps">36 шагов</span></div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать приложение с диалогом настроек (цвет, шрифт, имя пользователя) и демонстрацией QMessageBox, QFileDialog, QInputDialog.</div>
+        <button class="expand-btn" data-target="steps5">📋 Показать все шаги (36) ▼</button>
+        <div id="steps5" class="full-steps"><ol><li>Создайте <code>settings_app.py</code></li><li>Импортируйте все диалоговые модули</li><li>Создайте класс <code>SettingsDialog(QDialog)</code></li><li>Установите заголовок «Настройки приложения»</li><li>Создайте вертикальную компоновку</li><li>Добавьте кнопку выбора цвета фона</li><li>Добавьте кнопку выбора шрифта</li><li>Добавьте поле ввода имени пользователя (<code>QLineEdit</code>)</li><li>Создайте <code>QDialogButtonBox</code> с Ok/Cancel</li><li>Подключите <code>accepted</code> к <code>accept()</code>, <code>rejected</code> к <code>reject()</code></li><li>Реализуйте выбор цвета через <code>QColorDialog.getColor</code></li><li>Реализуйте выбор шрифта через <code>QFontDialog.getFont</code></li><li>Сохраняйте выбранные значения в атрибутах диалога</li><li>Создайте главный класс <code>MainWindow</code> с текстовой меткой</li><li>Добавьте кнопки: «Настройки», «Информация», «Предупреждение», «Ошибка», «Вопрос»</li><li>Добавьте кнопки «Выбор файла», «Ввод числа»</li><li>Добавьте метку <code>last_action</code> для отображения последнего действия</li><li>В методе <code>open_settings</code> создайте диалог, проверьте результат и примените настройки</li><li>Примените цвет фона к центральному виджету</li><li>Примените шрифт к метке образца</li><li>Отобразите имя пользователя в строке состояния</li><li>Реализуйте <code>show_message</code> для демонстрации всех типов <code>QMessageBox</code></li><li>Реализуйте выбор файла через <code>QFileDialog.getOpenFileName</code></li><li>Реализуйте ввод числа через <code>QInputDialog.getInt</code></li><li>Обновляйте <code>last_action</code> после каждого действия</li><li>Добавьте строку состояния с подсказками</li><li>Обработайте случай закрытия диалога через крестик</li><li>Добавьте подтверждение выхода через <code>QMessageBox.question</code> в <code>closeEvent</code></li><li>Добавьте кнопку «Сбросить настройки»</li><li>Сделайте так, чтобы при сбросе восстанавливались значения по умолчанию</li><li>Добавьте отображение выбранного цвета в диалоге (образец)</li><li>Протестируйте все диалоговые окна</li><li>Убедитесь, что настройки сохраняются между запусками (можно через <code>QSettings</code>)</li><li>Добавьте комментарии к каждому методу</li><li>Проверьте работу всех кнопок и диалогов</li><li>Запустите приложение, измените настройки, проверьте внешний вид.</li></ol><div class="step-count">✅ Итого: 36 шагов</div></div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 6. Лекция 6 -->
+    <div class="work-card">
+      <div class="work-header"><div class="work-title"><span class="work-num">Лекция 6</span><span class="work-name">Многодокументный интерфейс с плавающими окнами</span></div><span class="work-steps">33 шага</span></div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать менеджер заметок, позволяющий создавать новые окна, скрывать/показывать их и отслеживать закрытие через сигналы.</div>
+        <button class="expand-btn" data-target="steps6">📋 Показать все шаги (33) ▼</button>
+        <div id="steps6" class="full-steps"><ol><li>Создайте <code>multi_window_notes.py</code></li><li>Импортируйте <code>QWidget</code>, <code>QTextEdit</code>, <code>QVBoxLayout</code></li><li>Создайте класс <code>NoteWindow(QWidget)</code> с параметром <code>note_id</code></li><li>Установите заголовок окна <code>f"Заметка {note_id}"</code></li><li>Создайте вертикальную компоновку и <code>QTextEdit</code></li><li>Добавьте кнопку «Закрыть», подключите к <code>self.close()</code></li><li>Добавьте метку с временем создания</li><li>Объявите сигнал <code>window_closed = Signal(int)</code></li><li>В <code>closeEvent</code> испустите сигнал с <code>note_id</code></li><li>Создайте главный класс <code>NotesManager(QMainWindow)</code></li><li>Установите заголовок и размер 700×500</li><li>Создайте словарь <code>self.windows = {}</code> и счётчик <code>self.next_id = 1</code></li><li>Создайте центральный виджет с вертикальной компоновкой</li><li>Добавьте <code>QListWidget</code> для отображения открытых заметок</li><li>Добавьте кнопки: «Создать заметку», «Показать», «Скрыть», «Показать все», «Скрыть все», «Закрыть все»</li><li>Добавьте метку статуса (<code>status_label</code>)</li><li>Реализуйте <code>create_note</code>: создать заметку, сохранить в словарь, добавить в список</li><li>Подключите сигнал <code>window_closed</code> к <code>on_note_closed</code></li><li>Покажите окно через <code>show()</code>, увеличьте счётчик</li><li>Обновите строку состояния</li><li>Реализуйте <code>show_note</code> и <code>hide_note</code> (найти по ID, вызвать <code>show()</code>/<code>hide()</code>)</li><li>Реализуйте <code>on_note_closed</code>: удалить из словаря, удалить из списка, обновить статус</li><li>Реализуйте <code>show_all</code>: пройти по всем окнам и вызвать <code>show()</code></li><li>Реализуйте <code>hide_all</code> и <code>close_all</code></li><li>Добавьте возможность закрыть окно через контекстное меню списка</li><li>Подключите двойной клик по списку для показа окна</li><li>Обработайте случай, когда окно уже видимо</li><li>Добавьте индикацию, сколько окон открыто</li><li>Проверьте, что после закрытия окна ссылка удаляется</li><li>Добавьте возможность переименовывать заметки</li><li>Протестируйте создание 5–6 окон, их скрытие и показ</li><li>Убедитесь, что сигналы корректно обрабатываются</li><li>Запустите и проверьте все сценарии.</li></ol><div class="step-count">✅ Итого: 33 шага</div></div>
+      </div>
+    </div>
+
+    <!-- РАБОТА 7. Лекция 7 -->
+    <div class="work-card">
+      <div class="work-header"><div class="work-title"><span class="work-num">Лекция 7</span><span class="work-name">Графический редактор с обработкой событий мыши</span></div><span class="work-steps">35 шагов</span></div>
+      <div class="work-content">
+        <div class="work-goal"><strong>🎯 Задание:</strong> Создать простой графический редактор для рисования линий с поддержкой mousePressEvent, mouseMoveEvent, mouseReleaseEvent, mouseDoubleClickEvent и контекстного меню.</div>
+        <button class="expand-btn" data-target="steps7">📋 Показать все шаги (35) ▼</button>
+        <div id="steps7" class="full-steps"><ol><li>Создайте <code>mouse_paint.py</code></li><li>Импортируйте <code>QWidget</code>, <code>QPainter</code>, <code>QPen</code>, <code>QColor</code>, <code>QPoint</code>, <code>QMenu</code></li><li>Создайте класс <code>Canvas(QWidget)</code></li><li>Установите <code>setMouseTracking(True)</code></li><li>Создайте списки <code>self.lines = []</code> и <code>self.current_line = []</code></li><li>Создайте атрибуты <code>self.pen_color</code> и <code>self.pen_width</code></li><li>Переопределите <code>mousePressEvent</code>: проверьте левую кнопку, начните новую линию</li><li>Переопределите <code>mouseMoveEvent</code>: если зажата левая кнопка, добавляйте точки и перерисовывайте</li><li>Переопределите <code>mouseReleaseEvent</code>: добавьте завершённую линию в <code>self.lines</code>, очистите текущую</li><li>Переопределите <code>mouseDoubleClickEvent</code>: очистите все линии и перерисуйте</li><li>Переопределите <code>paintEvent</code>: создайте <code>QPainter</code>, установите перо, нарисуйте все линии</li><li>Переопределите <code>contextMenuEvent</code>: создайте меню с пунктами смены цвета и очистки</li><li>При выборе цвета меняйте <code>self.pen_color</code> и перерисовывайте</li><li>Покажите контекстное меню через <code>menu.exec(e.globalPos())</code></li><li>Создайте главный класс <code>MainWindow</code> с <code>Canvas</code> в центре</li><li>Добавьте строку состояния с отображением координат мыши</li><li>Подключите обновление координат через сигнал (можно через событие)</li><li>Добавьте кнопки сброса и очистки в панель инструментов</li><li>Реализуйте сохранение рисунка в файл (опционально)</li><li>Добавьте возможность изменения толщины пера через контекстное меню</li><li>Обработайте случай, когда линия состоит из одной точки</li><li>Добавьте отображение текущего цвета в строке состояния</li><li>Реализуйте режим рисования прямоугольников (расширение)</li><li>Добавьте отмену последнего действия</li><li>Протестируйте рисование на холсте</li><li>Проверьте двойной клик (очистка)</li><li>Проверьте контекстное меню и смену цвета</li><li>Убедитесь, что координаты мыши отображаются корректно</li><li>Добавьте возможность выбора цвета через <code>QColorDialog</code></li><li>Обработайте большие объёмы точек (оптимизация)</li><li>Добавьте подсказки к кнопкам</li><li>Сделайте так, чтобы линии рисовались плавно (аппроксимация)</li><li>Настройте фон холста</li><li>Запустите приложение, нарисуйте несколько линий разными цветами</li><li>Проверьте, что при двойном клике холст очищается.</li></ol><div class="step-count">✅ Итого: 35 шагов</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-nav">
+    <a class="btn btn-outline" href="main_page.html">← На главную</a>
+    <a class="btn btn-outline" href="questions/questions.html">📋 Вопросы к экзамену</a>
+  </div>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // Скролл топ
+  const btnScroll = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btnScroll.classList.toggle('visible', window.scrollY > 300);
+  });
+  // Раскрытие шагов
+  const buttons = document.querySelectorAll('.expand-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const targetDiv = document.getElementById(targetId);
+      if (targetDiv) {
+        targetDiv.classList.toggle('show');
+        btn.textContent = targetDiv.classList.contains('show') ? '📋 Скрыть шаги ▲' : '📋 Показать все шаги ▼';
+      }
+    });
+  });
+</script>
+</body>
+</html>
