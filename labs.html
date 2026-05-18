@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Практические работы — Менеджер задач (PyQt6/PySide6)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent;
+      cursor: pointer;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 100px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .header-section { margin-bottom: 48px; }
+    .page-badge {
+      font-family: var(--mono);
+      font-size: 12px; font-weight: 600;
+      color: var(--accent3);
+      background: rgba(79,209,165,0.12);
+      padding: 4px 12px; border-radius: 30px;
+      display: inline-block; margin-bottom: 16px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 32px; font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 16px; line-height: 1.25;
+    }
+    .desc {
+      color: var(--text-dim);
+      border-left: 3px solid var(--accent);
+      padding-left: 20px; margin-bottom: 16px;
+    }
+
+    /* Project files table */
+    .project-table {
+      margin: 24px 0 40px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .project-table-header {
+      background: var(--surface);
+      padding: 12px 20px;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-table-row {
+      display: flex; align-items: center; gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-table-row:last-child { border-bottom: none; }
+    .project-table-row:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .pt-file {
+      width: 210px; flex-shrink: 0;
+      padding: 10px 20px;
+      font-family: var(--mono); font-size: 12px; color: var(--accent);
+      border-right: 1px solid var(--border);
+    }
+    .pt-desc {
+      padding: 10px 20px;
+      font-size: 13px; color: var(--text-dim);
+    }
+    .pt-badge {
+      margin-left: auto; padding: 10px 20px;
+      font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* Works grid */
+    .works-grid {
+      display: flex; flex-direction: column;
+      gap: 32px; margin-top: 20px;
+    }
+    .work-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .work-card:hover {
+      border-color: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+    .work-header {
+      background: var(--surface);
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center; gap: 16px;
+    }
+    .work-title {
+      display: flex; align-items: baseline;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .work-num {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      color: var(--accent); background: var(--accent-dim);
+      padding: 4px 12px; border-radius: 30px;
+    }
+    .work-name {
+      font-family: var(--serif); font-size: 20px; font-weight: 700;
+      color: var(--text-bright);
+    }
+    .work-steps {
+      font-family: var(--mono); font-size: 11px; color: var(--accent3);
+      background: rgba(79,209,165,0.1);
+      padding: 4px 12px; border-radius: 30px;
+    }
+    .work-content { padding: 24px 28px; }
+
+    .work-meta {
+      display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+    }
+    .meta-block {
+      background: var(--bg); border-radius: 12px; padding: 14px 20px;
+      flex: 1; min-width: 220px;
+      font-size: 14px;
+    }
+    .meta-block.goal { border-left: 3px solid var(--accent3); }
+    .meta-block.result { border-left: 3px solid var(--accent); }
+    .meta-block strong {
+      display: block; margin-bottom: 4px; font-size: 11px;
+      font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .meta-block.goal strong { color: var(--accent3); }
+    .meta-block.result strong { color: var(--accent); }
+
+    .topics-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+    }
+    .topic-chip {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-dim); background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 12px; border-radius: 30px;
+    }
+
+    .expand-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); font-family: var(--mono);
+      font-size: 12px; font-weight: 600;
+      padding: 8px 20px; border-radius: 30px;
+      cursor: pointer; transition: all 0.2s;
+      margin-top: 4px;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .expand-btn:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .full-steps {
+      display: none; margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border);
+    }
+    .full-steps.show { display: block; }
+    .full-steps ol {
+      list-style: none;
+      counter-reset: step-counter;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .full-steps ol li {
+      counter-increment: step-counter;
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 13px; color: var(--text);
+      line-height: 1.65; padding: 2px 0;
+    }
+    .full-steps ol li::before {
+      content: counter(step-counter);
+      background: var(--accent-dim); color: var(--accent);
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      min-width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 20px; flex-shrink: 0; margin-top: 1px;
+    }
+    .full-steps ol li code {
+      font-family: var(--mono); font-size: 11.5px;
+      background: var(--code-bg); color: var(--accent3);
+      padding: 1px 6px; border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .step-count {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-dim); margin-top: 16px;
+      text-align: right;
+    }
+
+    .footer-nav {
+      margin-top: 56px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 42px; height: 42px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: 0.2s;
+      color: var(--text-dim); font-size: 18px;
+      z-index: 50;
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 700px) {
+      .page { padding: 32px 16px 80px; }
+      .work-header { flex-direction: column; align-items: flex-start; }
+      .pt-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="back-btn" href="index.html">← На главную</a>
+  <span class="topbar-badge">PySide6 · Практикум</span>
+  <span class="topbar-num">7 работ · Менеджер задач</span>
+</nav>
+
+<div class="page">
+  <div class="header-section">
+    <div class="page-badge">📘 Комплексный проект — 7 практических работ</div>
+    <h1>Персональный менеджер задач<br>на PyQt6 / PySide6</h1>
+    <div class="desc">
+      Каждая работа соответствует теме лекции и создаёт <strong>отдельный модуль</strong> единого приложения.<br>
+      К концу курса у вас будет полноценное десктопное приложение с меню, диалогами, окнами и обработкой событий.
+    </div>
+
+    <div class="project-table">
+      <div class="project-table-header">📁 Структура проекта</div>
+      <div class="project-table-row">
+        <div class="pt-file">main.py</div>
+        <div class="pt-desc">Главное окно QMainWindow — точка входа приложения</div>
+        <div class="pt-badge">Работа №1</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">task_form.py</div>
+        <div class="pt-desc">Форма добавления задачи: поля ввода, виджеты, сигналы</div>
+        <div class="pt-badge">Работа №2</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">task_list_panel.py</div>
+        <div class="pt-desc">Панель списка задач, сплиттер, верхняя панель фильтрации</div>
+        <div class="pt-badge">Работа №3</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">actions.py</div>
+        <div class="pt-desc">Действия QAction, строка меню, панель инструментов</div>
+        <div class="pt-badge">Работа №4</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">dialogs.py</div>
+        <div class="pt-desc">Диалоги редактирования, подтверждения, выбора файла</div>
+        <div class="pt-badge">Работа №5</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">stats_window.py</div>
+        <div class="pt-desc">Постоянное окно статистики, сигналы между окнами</div>
+        <div class="pt-badge">Работа №6</div>
+      </div>
+      <div class="project-table-row">
+        <div class="pt-file">task_list_widget.py</div>
+        <div class="pt-desc">Кастомный виджет с событиями мыши, контекстным меню, поиском</div>
+        <div class="pt-badge">Работа №7</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="works-grid">
+
+    <!-- ========================== РАБОТА 1 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 1</span>
+          <span class="work-name">Создание главного окна приложения</span>
+        </div>
+        <span class="work-steps">22 шага</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Создать основное окно «Персональный менеджер задач» — скелет, на котором строятся все последующие модули.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Запущенное окно QMainWindow с заголовком, настраиваемым размером и базовой структурой классов.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">QApplication</span>
+          <span class="topic-chip">QMainWindow</span>
+          <span class="topic-chip">Цикл событий</span>
+          <span class="topic-chip">setWindowTitle / resize</span>
+          <span class="topic-chip">setCentralWidget</span>
+        </div>
+        <button class="expand-btn" data-target="steps1">📋 Показать все шаги (22) ▼</button>
+        <div id="steps1" class="full-steps">
+          <ol>
+            <li>Создайте новую папку проекта <code>task_manager/</code> на рабочем столе или в удобном месте.</li>
+            <li>Внутри папки создайте файл <code>main.py</code> — это будет точка входа всего приложения.</li>
+            <li>Откройте <code>main.py</code> в редакторе и добавьте импорт: <code>from PySide6.QtWidgets import QApplication, QMainWindow, QWidget</code></li>
+            <li>Добавьте импорт: <code>import sys</code> — он нужен для передачи аргументов командной строки в QApplication.</li>
+            <li>Создайте класс <code>MainWindow</code>, унаследованный от <code>QMainWindow</code>: напишите <code>class MainWindow(QMainWindow):</code> и метод <code>__init__(self)</code>.</li>
+            <li>В методе <code>__init__</code> вызовите <code>super().__init__()</code> — обязательная инициализация родительского класса.</li>
+            <li>Установите заголовок окна: <code>self.setWindowTitle('Менеджер задач')</code>.</li>
+            <li>Задайте минимальный размер окна: <code>self.setMinimumSize(900, 600)</code>.</li>
+            <li>Установите начальный размер: <code>self.resize(1000, 700)</code>.</li>
+            <li>Создайте центральный пустой виджет: <code>container = QWidget()</code> и установите его: <code>self.setCentralWidget(container)</code>.</li>
+            <li>Добавьте метод <code>_setup_ui(self)</code> (пока пустой) — в него в будущем будет вынесена вся логика создания интерфейса.</li>
+            <li>Вызовите <code>self._setup_ui()</code> в конце <code>__init__</code>.</li>
+            <li>Ниже класса добавьте блок запуска: <code>if __name__ == '__main__':</code>.</li>
+            <li>Внутри блока создайте объект приложения: <code>app = QApplication(sys.argv)</code>.</li>
+            <li>Создайте экземпляр окна: <code>window = MainWindow()</code>.</li>
+            <li>Вызовите <code>window.show()</code> для отображения окна.</li>
+            <li>Запустите цикл событий: <code>app.exec()</code>.</li>
+            <li>Запустите приложение командой <code>python main.py</code> и убедитесь, что окно открывается.</li>
+            <li>Проверьте, что заголовок окна соответствует заданному тексту <code>'Менеджер задач'</code>.</li>
+            <li>Попробуйте изменить <code>resize</code> на <code>setFixedSize(1000, 700)</code> — убедитесь, что окно стало нерастягиваемым, затем верните <code>resize</code> для гибкости.</li>
+            <li>Добавьте строку состояния: <code>self.statusBar().showMessage('Готово')</code> — она пригодится в следующих работах.</li>
+            <li>Добавьте в конец файла комментарий-заглушку: <code># TODO: добавить меню, панель инструментов, список задач</code>.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 22 шага</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 2 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 2</span>
+          <span class="work-name">Форма добавления задачи</span>
+        </div>
+        <span class="work-steps">22 шага</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Реализовать виджеты ввода данных: текстовое поле, чекбокс срочности и выпадающий список приоритета. Связать их через сигналы и слоты.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Панель с формой добавления задачи, активной кнопкой «Добавить» только при заполненном поле, выводом данных в консоль.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">QLabel</span>
+          <span class="topic-chip">QLineEdit</span>
+          <span class="topic-chip">QCheckBox</span>
+          <span class="topic-chip">QComboBox</span>
+          <span class="topic-chip">QPushButton</span>
+          <span class="topic-chip">clicked / textChanged</span>
+          <span class="topic-chip">connect()</span>
+        </div>
+        <button class="expand-btn" data-target="steps2">📋 Показать все шаги (22) ▼</button>
+        <div id="steps2" class="full-steps">
+          <ol>
+            <li>Создайте новый файл <code>task_form.py</code> в папке проекта.</li>
+            <li>Импортируйте необходимые классы: <code>from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QCheckBox, QComboBox, QPushButton, QVBoxLayout</code></li>
+            <li>Создайте класс <code>TaskForm(QWidget)</code> с методом <code>__init__(self, parent=None)</code>.</li>
+            <li>В <code>__init__</code> вызовите <code>super().__init__(parent)</code> и создайте метку заголовка: <code>QLabel('Новая задача')</code>.</li>
+            <li>Создайте текстовое поле для названия задачи: <code>self.title_input = QLineEdit()</code> и задайте placeholder: <code>self.title_input.setPlaceholderText('Название задачи...')</code>.</li>
+            <li>Создайте <code>QLabel('Описание:')</code> и поле <code>self.desc_input = QLineEdit()</code> с placeholder <code>'Краткое описание...'</code>.</li>
+            <li>Создайте выпадающий список: <code>self.priority_combo = QComboBox()</code> и добавьте элементы: <code>addItems(['Низкий', 'Средний', 'Высокий', 'Критический'])</code>.</li>
+            <li>Создайте чекбокс срочности: <code>self.urgent_check = QCheckBox('Срочная задача')</code>.</li>
+            <li>Создайте кнопку добавления: <code>self.add_button = QPushButton('Добавить задачу')</code>.</li>
+            <li>Сразу после создания кнопки установите её неактивной: <code>self.add_button.setEnabled(False)</code>.</li>
+            <li>Создайте метод <code>_on_add_clicked(self)</code> — обработчик нажатия кнопки.</li>
+            <li>В <code>_on_add_clicked</code> получите значения: <code>title = self.title_input.text()</code>, <code>priority = self.priority_combo.currentText()</code>, <code>urgent = self.urgent_check.isChecked()</code>.</li>
+            <li>Добавьте проверку: если <code>title</code> пустой — выведите <code>print('Введите название!')</code> и выйдите из метода.</li>
+            <li>Выведите собранные данные: <code>print(f'Задача: {title}, Приоритет: {priority}, Срочная: {urgent}')</code>.</li>
+            <li>Подключите сигнал кнопки к слоту: <code>self.add_button.clicked.connect(self._on_add_clicked)</code>.</li>
+            <li>Создайте слот <code>_on_title_changed(self, text)</code> и в нём активируйте/деактивируйте кнопку: <code>self.add_button.setEnabled(bool(text))</code>.</li>
+            <li>Подключите: <code>self.title_input.textChanged.connect(self._on_title_changed)</code>.</li>
+            <li>Создайте слот <code>_on_priority_changed(self, index)</code>, подключите <code>currentIndexChanged</code> и в слоте выводите выбранный приоритет в консоль.</li>
+            <li>Создайте метод <code>clear_form(self)</code>: <code>self.title_input.clear()</code>, <code>self.desc_input.clear()</code>, <code>self.urgent_check.setChecked(False)</code>.</li>
+            <li>Вызовите <code>self.clear_form()</code> в конце <code>_on_add_clicked</code> после успешного добавления.</li>
+            <li>Соберите все виджеты в <code>QVBoxLayout</code> и установите его: <code>self.setLayout(layout)</code>.</li>
+            <li>В <code>main.py</code> импортируйте <code>TaskForm</code>, создайте экземпляр и временно установите как <code>centralWidget</code>. Запустите и проверьте кнопку.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 22 шага</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 3 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 3</span>
+          <span class="work-name">Компоновка главного окна</span>
+        </div>
+        <span class="work-steps">22 шага</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Организовать главный интерфейс с помощью вложенных компоновок: список задач слева и форма добавления справа.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Полноценный макет главного окна: список задач (60%) и форма (40%), разделённые QSplitter, с верхней панелью фильтрации.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">QVBoxLayout</span>
+          <span class="topic-chip">QHBoxLayout</span>
+          <span class="topic-chip">QGridLayout</span>
+          <span class="topic-chip">QSplitter</span>
+          <span class="topic-chip">QListWidget</span>
+          <span class="topic-chip">Вложенные компоновки</span>
+        </div>
+        <button class="expand-btn" data-target="steps3">📋 Показать все шаги (22) ▼</button>
+        <div id="steps3" class="full-steps">
+          <ol>
+            <li>Создайте файл <code>task_list_panel.py</code> с классом <code>TaskListPanel(QWidget)</code>.</li>
+            <li>В <code>TaskListPanel</code> добавьте <code>QLabel('Список задач')</code> в качестве заголовка с крупным шрифтом.</li>
+            <li>Добавьте <code>self.list_widget = QListWidget()</code> — в нём будут отображаться задачи.</li>
+            <li>Создайте горизонтальную панель кнопок: <code>QPushButton('Удалить')</code> и <code>QPushButton('Завершить')</code>.</li>
+            <li>Соберите кнопки в <code>QHBoxLayout</code>: <code>buttons_layout = QHBoxLayout()</code>, добавьте обе кнопки.</li>
+            <li>Создайте основной <code>QVBoxLayout</code> для панели и добавьте в него: метку заголовка, <code>list_widget</code>, <code>buttons_layout</code>.</li>
+            <li>Установите компоновку: <code>self.setLayout(main_layout)</code>.</li>
+            <li>В файле <code>main.py</code> импортируйте <code>QSplitter</code> из <code>PySide6.QtWidgets</code> и <code>Qt</code> из <code>PySide6.QtCore</code>.</li>
+            <li>В методе <code>_setup_ui()</code> главного окна создайте сплиттер: <code>splitter = QSplitter(Qt.Horizontal)</code>.</li>
+            <li>Создайте экземпляры <code>TaskListPanel()</code> и <code>TaskForm()</code>, добавьте в сплиттер: <code>splitter.addWidget(...)</code>.</li>
+            <li>Задайте пропорции сплиттера: <code>splitter.setSizes([600, 400])</code>.</li>
+            <li>Создайте файл <code>top_bar.py</code> с классом <code>TopBar(QWidget)</code> — верхняя панель фильтрации.</li>
+            <li>В <code>TopBar</code> добавьте <code>QLabel('Фильтр:')</code>, <code>QLineEdit()</code> для поиска и <code>QComboBox</code> с вариантами: <code>['Все', 'Активные', 'Завершённые']</code>.</li>
+            <li>Разместите виджеты <code>TopBar</code> в <code>QHBoxLayout</code> с расстоянием между элементами (<code>addSpacing(10)</code>).</li>
+            <li>В <code>_setup_ui()</code> создайте основной <code>QVBoxLayout</code>: добавьте топбар сверху, затем сплиттер.</li>
+            <li>Оберните весь layout в <code>QWidget()</code> и установите как <code>centralWidget</code>.</li>
+            <li>Настройте минимальные ширины панелей через <code>setMinimumWidth()</code> — 300px для списка и 250px для формы.</li>
+            <li>Добавьте в <code>TaskListPanel</code> метод <code>add_task(self, title, priority, urgent)</code>, который добавляет элемент в <code>QListWidget</code> с текстом вида <code>'[Высокий] Название ⚡'</code> если срочная.</li>
+            <li>Объявите пользовательский сигнал в <code>TaskForm</code>: <code>task_added = Signal(str, str, bool)</code> (импортируйте <code>Signal</code> из <code>PySide6.QtCore</code>).</li>
+            <li>В <code>_on_add_clicked</code> вместо <code>print</code> испускайте сигнал: <code>self.task_added.emit(title, priority, urgent)</code>.</li>
+            <li>В <code>main.py</code> подключите: <code>form.task_added.connect(list_panel.add_task)</code>.</li>
+            <li>Запустите приложение и убедитесь, что добавленные задачи появляются в списке, сплиттер регулируется мышью.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 22 шага</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 4 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 4</span>
+          <span class="work-name">Меню и панель инструментов</span>
+        </div>
+        <span class="work-steps">22 шага</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Добавить в приложение полноценную строку меню и панель инструментов с действиями для управления задачами.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Главное меню с пунктами «Файл», «Задачи», «Вид», «Помощь» и панель инструментов с горячими клавишами.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">QAction</span>
+          <span class="topic-chip">QMenuBar / QMenu</span>
+          <span class="topic-chip">QToolBar</span>
+          <span class="topic-chip">setShortcut</span>
+          <span class="topic-chip">setToolTip</span>
+          <span class="topic-chip">triggered</span>
+        </div>
+        <button class="expand-btn" data-target="steps4">📋 Показать все шаги (22) ▼</button>
+        <div id="steps4" class="full-steps">
+          <ol>
+            <li>Создайте файл <code>actions.py</code> и напишите вспомогательную функцию <code>create_action(parent, text, shortcut=None, tooltip=None) -&gt; QAction</code>.</li>
+            <li>В функции создайте <code>action = QAction(text, parent)</code>, если задан <code>shortcut</code> — установите его, если задан <code>tooltip</code> — тоже. Верните <code>action</code>.</li>
+            <li>В главном окне создайте метод <code>_create_actions(self)</code> и добавьте: <code>self.act_new = create_action(self, 'Новая задача', 'Ctrl+N', 'Создать новую задачу')</code>.</li>
+            <li>Добавьте действия: <code>act_save</code> (Ctrl+S), <code>act_load</code> (Ctrl+O), <code>act_exit</code> (Ctrl+Q, 'Выход').</li>
+            <li>Добавьте действия для задач: <code>act_complete</code> ('Завершить', Ctrl+D), <code>act_delete</code> ('Удалить', Delete), <code>act_clear_all</code> ('Очистить список', Ctrl+Shift+D).</li>
+            <li>Добавьте действие вида: <code>act_toggle_toolbar = QAction('Панель инструментов', self)</code>, установите <code>setCheckable(True)</code> и <code>setChecked(True)</code>.</li>
+            <li>Подключите <code>act_exit</code> к закрытию окна: <code>self.act_exit.triggered.connect(self.close)</code>.</li>
+            <li>Создайте метод <code>_create_menu(self)</code>. Получите строку меню: <code>menubar = self.menuBar()</code>.</li>
+            <li>Создайте меню «Файл»: <code>file_menu = menubar.addMenu('&Файл')</code> и добавьте: <code>act_new</code>, разделитель, <code>act_save</code>, <code>act_load</code>, разделитель, <code>act_exit</code>.</li>
+            <li>Создайте меню «Задачи»: добавьте <code>act_complete</code>, <code>act_delete</code>, разделитель, <code>act_clear_all</code>.</li>
+            <li>Создайте меню «Вид»: добавьте <code>act_toggle_toolbar</code>.</li>
+            <li>Создайте меню «Помощь»: добавьте <code>act_about</code> с текстом <code>'&О программе'</code>.</li>
+            <li>Создайте метод <code>_create_toolbar(self)</code>. Создайте панель: <code>toolbar = self.addToolBar('Основные действия')</code>.</li>
+            <li>Добавьте в тулбар: <code>toolbar.addAction(self.act_new)</code>, разделитель, <code>act_complete</code>, <code>act_delete</code>.</li>
+            <li>Установите стиль: <code>toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)</code>.</li>
+            <li>Подключите переключение тулбара: <code>self.act_toggle_toolbar.toggled.connect(toolbar.setVisible)</code>.</li>
+            <li>Создайте слот <code>_on_about(self)</code>, который вызывает <code>QMessageBox.about(self, 'О программе', 'Менеджер задач v1.0\nPySide6')</code>.</li>
+            <li>Подключите: <code>self.act_about.triggered.connect(self._on_about)</code>.</li>
+            <li>В <code>_setup_ui()</code> вызовите <code>_create_actions()</code>, <code>_create_menu()</code>, <code>_create_toolbar()</code> в нужном порядке.</li>
+            <li>Подключите <code>act_new</code> к методу, который переводит фокус на поле названия формы: <code>self.form.title_input.setFocus()</code>.</li>
+            <li>Подключите <code>act_clear_all</code> к методу <code>_confirm_clear_all(self)</code>, который показывает <code>QMessageBox.question</code> перед очисткой.</li>
+            <li>Запустите приложение и проверьте работу всех пунктов меню, горячих клавиш и кнопок тулбара.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 22 шага</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 5 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 5</span>
+          <span class="work-name">Диалоги подтверждения и редактирования</span>
+        </div>
+        <span class="work-steps">20 шагов</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Добавить диалоговые окна: подтверждение удаления, форма редактирования задачи и диалог выбора файла для сохранения/загрузки.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Рабочие диалоги: подтверждение удаления (QMessageBox), форма редактирования (QDialog), выбор файла (QFileDialog).
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">QMessageBox</span>
+          <span class="topic-chip">QDialog</span>
+          <span class="topic-chip">QDialogButtonBox</span>
+          <span class="topic-chip">QFileDialog</span>
+          <span class="topic-chip">accept / reject</span>
+          <span class="topic-chip">Модальные окна</span>
+        </div>
+        <button class="expand-btn" data-target="steps5">📋 Показать все шаги (20) ▼</button>
+        <div id="steps5" class="full-steps">
+          <ol>
+            <li>Создайте файл <code>dialogs.py</code> для всех диалоговых окон приложения.</li>
+            <li>Импортируйте: <code>QDialog, QDialogButtonBox, QMessageBox, QFileDialog</code> из <code>PySide6.QtWidgets</code>.</li>
+            <li>Создайте класс <code>EditTaskDialog(QDialog)</code> с параметром <code>task_data: dict</code> в конструкторе.</li>
+            <li>В <code>__init__</code> задайте заголовок <code>'Редактировать задачу'</code> и создайте поля формы: <code>QLineEdit</code> для названия, <code>QLineEdit</code> для описания, <code>QComboBox</code> для приоритета, <code>QCheckBox</code> для срочности.</li>
+            <li>Заполните поля данными из <code>task_data</code>: <code>self.title_input.setText(task_data.get('title', ''))</code> и аналогично для остальных.</li>
+            <li>Добавьте стандартную кнопочную панель: <code>buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)</code>.</li>
+            <li>Подключите кнопки: <code>buttons.accepted.connect(self.accept)</code>, <code>buttons.rejected.connect(self.reject)</code>.</li>
+            <li>Соберите всё в <code>QVBoxLayout</code> и установите как layout диалога.</li>
+            <li>Создайте метод <code>get_data(self) -&gt; dict</code>, который возвращает словарь с изменёнными данными задачи из всех полей формы.</li>
+            <li>В <code>task_list_panel.py</code> создайте метод <code>edit_selected_task(self)</code>: получите выделенный элемент, составьте <code>task_data</code>, откройте <code>EditTaskDialog</code>.</li>
+            <li>Если <code>dialog.exec() == QDialog.Accepted</code> — обновите текст элемента в списке данными из <code>dialog.get_data()</code>.</li>
+            <li>Создайте функцию <code>confirm_delete(parent, task_name) -&gt; bool</code> в <code>dialogs.py</code>: показывает <code>QMessageBox.question</code> с вопросом об удалении, возвращает <code>True</code>/<code>False</code>.</li>
+            <li>Подключите кнопку «Удалить» и <code>act_delete</code> к методу, который вызывает <code>confirm_delete</code> перед удалением.</li>
+            <li>Создайте функцию <code>ask_save_file(parent) -&gt; str</code> через <code>QFileDialog.getSaveFileName()</code> с фильтром <code>'JSON files (*.json)'</code>.</li>
+            <li>Создайте функцию <code>ask_open_file(parent) -&gt; str</code> через <code>QFileDialog.getOpenFileName()</code> с тем же фильтром.</li>
+            <li>Подключите <code>act_save</code> к методу <code>_save_tasks(self)</code>, который вызывает <code>ask_save_file</code> и выводит путь в консоль.</li>
+            <li>Подключите <code>act_load</code> к методу <code>_load_tasks(self)</code>, который вызывает <code>ask_open_file</code> и выводит путь в консоль.</li>
+            <li>Добавьте обработку случая, когда пользователь нажал «Отмена» в <code>QFileDialog</code> (возвращается пустая строка).</li>
+            <li>Подключите двойной клик по задаче: <code>self.list_widget.itemDoubleClicked.connect(self.edit_selected_task)</code>.</li>
+            <li>Запустите приложение и проверьте все три диалога: редактирование по двойному клику, подтверждение удаления, выбор файла через меню.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 20 шагов</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 6 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 6</span>
+          <span class="work-name">Окно статистики и управление окнами</span>
+        </div>
+        <span class="work-steps">21 шаг</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Создать отдельное окно статистики задач, реализовать механизм его показа/скрытия и передачи данных между окнами через сигналы.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Постоянное окно статистики, открываемое из меню «Вид», отображающее количество задач по статусу и приоритету.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">Вторичные окна</span>
+          <span class="topic-chip">show / hide</span>
+          <span class="topic-chip">closeEvent</span>
+          <span class="topic-chip">Signal между окнами</span>
+          <span class="topic-chip">Постоянные окна</span>
+        </div>
+        <button class="expand-btn" data-target="steps6">📋 Показать все шаги (21) ▼</button>
+        <div id="steps6" class="full-steps">
+          <ol>
+            <li>Создайте файл <code>stats_window.py</code> с классом <code>StatsWindow(QWidget)</code>.</li>
+            <li>Задайте заголовок <code>'Статистика задач'</code> и размер через <code>self.setFixedSize(400, 350)</code>.</li>
+            <li>Добавьте метки: <code>QLabel('Всего задач:')</code> и <code>self.total_label = QLabel('0')</code>.</li>
+            <li>Добавьте метки для каждого приоритета: «Низкий», «Средний», «Высокий», «Критический» — каждый с парной меткой-значением.</li>
+            <li>Добавьте метки: «Активных:» и «Завершённых:» с соответствующими <code>QLabel</code> для значений.</li>
+            <li>Разместите все метки в <code>QGridLayout</code>: название в колонку 0, значение — в колонку 1.</li>
+            <li>Объявите пользовательский сигнал: <code>stats_requested = Signal()</code>.</li>
+            <li>Создайте метод <code>update_stats(self, stats: dict)</code>, который обновляет все метки из переданного словаря.</li>
+            <li>Добавьте кнопку «Обновить» и подключите её к <code>self.stats_requested.emit()</code>.</li>
+            <li>Переопределите <code>closeEvent</code>: вместо закрытия скрывайте окно: <code>self.hide()</code>, <code>event.ignore()</code>.</li>
+            <li>В главном окне <code>main.py</code> создайте экземпляр <code>StatsWindow</code> в <code>__init__</code>: <code>self.stats_window = StatsWindow()</code>.</li>
+            <li>Добавьте в меню «Вид» пункт <code>act_stats = QAction('Статистика', self)</code> с <code>setCheckable(True)</code>.</li>
+            <li>Подключите: <code>self.act_stats.toggled.connect(self.stats_window.setVisible)</code>.</li>
+            <li>В <code>TaskListPanel</code> создайте метод <code>get_stats(self) -&gt; dict</code>, который подсчитывает задачи по приоритетам и статусам (зачёркнутые = завершённые).</li>
+            <li>В главном окне создайте слот <code>_refresh_stats(self)</code>: <code>self.stats_window.update_stats(self.list_panel.get_stats())</code>.</li>
+            <li>Подключите <code>stats_window.stats_requested</code> к <code>_refresh_stats</code>.</li>
+            <li>Вызывайте <code>_refresh_stats()</code> после каждого добавления, удаления или изменения задачи.</li>
+            <li>Добавьте в <code>StatsWindow</code> метку <code>'Обновлено:'</code> с временем последнего обновления (<code>QTime.currentTime().toString()</code>).</li>
+            <li>Обновляйте время в <code>update_stats()</code>.</li>
+            <li>Проверьте, что при закрытии окна статистики через крестик оно лишь скрывается, а галочка в меню снимается.</li>
+            <li>Запустите приложение, добавьте несколько задач разных приоритетов и проверьте, что статистика обновляется корректно.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 21 шаг</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================== РАБОТА 7 ========================== -->
+    <div class="work-card">
+      <div class="work-header">
+        <div class="work-title">
+          <span class="work-num">Лекция 7</span>
+          <span class="work-name">Обработка событий и контекстные меню</span>
+        </div>
+        <span class="work-steps">21 шаг</span>
+      </div>
+      <div class="work-content">
+        <div class="work-meta">
+          <div class="meta-block goal">
+            <strong>🎯 Цель работы</strong>
+            Добавить обработку событий мыши и клавиатуры, реализовать контекстное меню для задач, цветовую индикацию приоритетов и поиск по списку.
+          </div>
+          <div class="meta-block result">
+            <strong>✅ Ожидаемый результат</strong>
+            Полностью интерактивное приложение: контекстное меню, горячие клавиши, фильтрация, цвета приоритетов и итоговая полировка UI.
+          </div>
+        </div>
+        <div class="topics-row">
+          <span class="topic-chip">contextMenuEvent</span>
+          <span class="topic-chip">keyPressEvent</span>
+          <span class="topic-chip">mousePressEvent</span>
+          <span class="topic-chip">wheelEvent</span>
+          <span class="topic-chip">closeEvent</span>
+          <span class="topic-chip">QMenu</span>
+        </div>
+        <button class="expand-btn" data-target="steps7">📋 Показать все шаги (21) ▼</button>
+        <div id="steps7" class="full-steps">
+          <ol>
+            <li>Создайте подкласс <code>class TaskListWidget(QListWidget)</code> в файле <code>task_list_panel.py</code>.</li>
+            <li>Переопределите <code>contextMenuEvent(self, event)</code>: создайте <code>menu = QMenu(self)</code> и добавьте пункты: «Редактировать», «Завершить», «Удалить», разделитель, «Копировать название».</li>
+            <li>Подключите «Копировать название» к <code>QApplication.clipboard().setText(self.currentItem().text())</code>.</li>
+            <li>Подключите «Завершить» к методу, который зачёркивает текст: получите шрифт элемента, установите <code>font.setStrikeOut(True)</code>, примените обратно.</li>
+            <li>Покажите меню: <code>menu.exec(event.globalPos())</code>.</li>
+            <li>Переопределите <code>keyPressEvent(self, event)</code> в <code>TaskListWidget</code>.</li>
+            <li>В <code>keyPressEvent</code> обработайте <code>Key_Delete</code>: удаляйте выделенный элемент с подтверждением через <code>confirm_delete()</code>.</li>
+            <li>Обработайте <code>Key_Return</code> / <code>Key_Enter</code>: открывайте <code>EditTaskDialog</code> для выделенного элемента.</li>
+            <li>Добавьте <code>wheelEvent(self, event)</code>: если зажат <code>Ctrl</code>, изменяйте размер шрифта списка на ±1pt.</li>
+            <li>В <code>TaskListPanel</code> замените <code>QListWidget</code> на <code>TaskListWidget</code>.</li>
+            <li>В методе <code>add_task</code> добавьте цветовую индикацию приоритетов: красный для «Критического», оранжевый для «Высокого», жёлтый для «Среднего» через <code>item.setForeground(QColor(...))</code>.</li>
+            <li>В главном окне переопределите <code>closeEvent(self, event)</code>: если список задач не пуст — показывайте <code>QMessageBox.question</code> с вопросом о сохранении перед выходом.</li>
+            <li>Добавьте горячую клавишу <code>F5</code> для вызова <code>_refresh_stats()</code>.</li>
+            <li>Добавьте горячую клавишу <code>Escape</code> для снятия выделения: <code>self.list_panel.list_widget.clearSelection()</code>.</li>
+            <li>Реализуйте поиск: подключите <code>TopBar.search_input.textChanged</code> к методу <code>_filter_tasks(self, text)</code> в главном окне.</li>
+            <li>В <code>_filter_tasks</code> итерируйтесь по элементам <code>list_widget</code> и вызывайте <code>item.setHidden(text.lower() not in item.text().lower())</code>.</li>
+            <li>Подключите фильтр по статусу из <code>TopBar.filter_combo</code>: «Все» — показывать всё, «Активные» — скрывать зачёркнутые, «Завершённые» — скрывать незачёркнутые.</li>
+            <li>Добавьте динамическое обновление строки состояния: после каждого изменения списка вызывайте <code>_update_statusbar(self)</code>, который выводит: <code>'Задач: N | Активных: X | Завершённых: Y'</code>.</li>
+            <li>Добавьте всплывающую подсказку к элементам списка: при создании задачи устанавливайте <code>item.setToolTip(f'Приоритет: {priority}\nОписание: {desc}')</code>.</li>
+            <li>Добавьте горячую клавишу <code>Ctrl+F</code> для перевода фокуса на поле поиска в <code>TopBar</code>.</li>
+            <li>Финальный запуск: добавьте 5+ задач разных приоритетов, попробуйте поиск, фильтрацию, редактирование по двойному клику и через контекстное меню, проверьте диалог при закрытии, откройте окно статистики.</li>
+          </ol>
+          <div class="step-count">✅ Итого: 21 шаг</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /works-grid -->
+
+  <div class="footer-nav">
+    <a class="btn btn-outline" href="index.html">← На главную</a>
+    <a class="btn btn-outline" href="questions/questions.html">📋 Вопросы к экзамену</a>
+  </div>
+</div>
+
+<button class="scroll-top" id="scrollTop">↑</button>
+
+<script>
+  const btnScroll = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btnScroll.classList.toggle('visible', window.scrollY > 300);
+  });
+  btnScroll.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  document.querySelectorAll('.expand-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const targetDiv = document.getElementById(targetId);
+      if (targetDiv) {
+        targetDiv.classList.toggle('show');
+        const isOpen = targetDiv.classList.contains('show');
+        const count = btn.textContent.match(/\((\d+)/)?.[1] || '';
+        btn.textContent = isOpen
+          ? `📋 Скрыть шаги ▲`
+          : `📋 Показать все шаги (${count}) ▼`;
+      }
+    });
+  });
+</script>
+</body>
+</html>

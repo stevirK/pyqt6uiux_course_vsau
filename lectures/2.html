@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Лекция 2 — Сигналы, слоты и виджеты</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+      --code-bg: #0a0c10;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dim); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 3px;
+      transition: all 0.2s;
+      background: transparent; cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .topbar-num {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 780px; margin: 0 auto;
+      padding: 56px 24px 100px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .lecture-header { margin-bottom: 52px; }
+    .lecture-kicker {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .lecture-kicker::before {
+      content: ''; display: inline-block;
+      width: 20px; height: 1px; background: var(--accent);
+    }
+    .lecture-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700; color: var(--text-bright);
+      line-height: 1.25; margin-bottom: 24px;
+    }
+    .lecture-meta {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .lecture-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .content h2 {
+      font-family: var(--serif); font-size: 22px; font-weight: 700;
+      color: var(--text-bright); margin: 48px 0 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .content h3 {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin: 36px 0 12px;
+    }
+    .content h4 {
+      font-family: var(--serif); font-size: 17px; font-weight: 600;
+      color: var(--text-bright); margin: 28px 0 10px;
+    }
+    .content p {
+      color: var(--text); margin-bottom: 16px; font-size: 15.5px;
+    }
+    .content strong { color: var(--text-bright); font-weight: 600; }
+    .content em { color: var(--accent); font-style: italic; }
+
+    .content ul, .content ol {
+      margin: 0 0 20px 0; padding-left: 0;
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .content ul li, .content ol li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: var(--text);
+    }
+    .content ul li::before {
+      content: '—'; color: var(--accent); font-family: var(--mono);
+      font-size: 12px; padding-top: 4px; flex-shrink: 0;
+    }
+    .content ol { counter-reset: ol-counter; }
+    .content ol li { counter-increment: ol-counter; }
+    .content ol li::before {
+      content: counter(ol-counter) '.';
+      color: var(--accent); font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      min-width: 20px; padding-top: 4px; flex-shrink: 0;
+    }
+
+    .content pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 20px 20px 20px 22px;
+      overflow-x: auto;
+      margin: 20px 0 24px;
+      position: relative;
+    }
+    .content pre code {
+      font-family: var(--mono); font-size: 13px;
+      line-height: 1.7; color: #a8c4ff;
+      white-space: pre;
+    }
+    .content code:not(pre code) {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--accent-dim); color: var(--accent);
+      padding: 1px 6px; border-radius: 3px;
+    }
+    .code-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 6px; display: block;
+    }
+
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent3);
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .note strong { color: var(--accent3); }
+
+    .table-flags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 20px 0 24px;
+      overflow-x: auto;
+    }
+    .table-flags table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .table-flags th, .table-flags td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-flags th {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .table-flags tr:last-child td {
+      border-bottom: none;
+    }
+    .table-flags td code {
+      background: transparent;
+      padding: 0;
+      font-size: 11px;
+    }
+
+    .questions-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 28px 24px;
+      margin-top: 56px;
+    }
+    .questions-block h2 {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); margin: 0 0 20px;
+      padding: 0; border: none;
+    }
+    .questions-block ol {
+      margin: 0; gap: 12px;
+    }
+    .questions-block ol li {
+      font-size: 14px; color: var(--text); line-height: 1.6;
+    }
+
+    .footer-nav {
+      margin-top: 64px; padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-decoration: none;
+      padding: 10px 20px; border-radius: 3px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-lab {
+      background: var(--accent3); color: #0a1510;
+    }
+    .btn-lab:hover { background: #6fdfb5; transform: translateY(-1px); }
+    .btn-next {
+      background: var(--accent); color: #0d0f14;
+    }
+    .btn-next:hover { background: #7ab2ff; transform: translateY(-1px); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text); background: transparent;
+    }
+    .btn-outline:hover { border-color: var(--text-dim); color: var(--text-bright); }
+
+    .scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 38px; height: 38px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--text-dim);
+      transition: all 0.2s; z-index: 50;
+      opacity: 0; pointer-events: none;
+    }
+    .scroll-top.visible { opacity: 1; pointer-events: auto; }
+    .scroll-top:hover { color: var(--text-bright); border-color: var(--text-dim); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .page { padding: 36px 16px 80px; }
+      .topbar { padding: 10px 16px; }
+      .topbar-num { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="back-btn" href="../index.html">← Назад</a>
+  <span class="topbar-badge">PyQt6 · PySide6</span>
+  <span class="topbar-num">Лекция 02 / 07</span>
+</nav>
+
+<div class="page">
+
+  <header class="lecture-header">
+    <div class="lecture-kicker">Лекция 2</div>
+    <h1 class="lecture-title">Сигналы, слоты<br>и основные виджеты</h1>
+    <div class="lecture-meta">
+      <span>🔌 Темы: сигналы и слоты, QLabel, QCheckBox, QComboBox</span>
+      <span>⏱ ~35 мин</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <h2>Сигналы и слоты — сердце Qt</h2>
+    <p>
+      В прошлой лекции мы создали окно и добавили кнопку, но кнопка ничего не делала. 
+      Чтобы приложения оживали, нам нужен способ связать действия пользователя (нажатие, выбор, ввод) 
+      с реальным поведением программы. В Qt эта задача решается с помощью механизма 
+      <strong>сигналов</strong> и <strong>слотов</strong>.
+    </p>
+    <p>
+      <strong>Сигналы</strong> — это уведомления, которые виджеты отправляют при наступлении какого-либо события. 
+      Этим событием может быть что угодно: от нажатия кнопки до изменения текста в поле ввода. 
+      Многие сигналы инициируются действиями пользователя, но это не является правилом. 
+      Сигналы также могут передавать данные, предоставляя дополнительную информацию о произошедшем.
+    </p>
+    <p>
+      <strong>Слоты</strong> — это получатели сигналов. В Python любая функция или метод может использоваться 
+      в качестве слота — достаточно просто подключить к ней сигнал. Если сигнал отправляет данные, 
+      принимающая функция получит эти данные. Многие виджеты Qt имеют собственные встроенные слоты, 
+      что позволяет связывать виджеты напрямую друг с другом.
+    </p>
+
+    <h3>QPushButton — первые сигналы</h3>
+    <p>
+      Подключим сигнал <code>clicked</code> от кнопки к пользовательскому методу. 
+      Кнопку можно сделать <strong>переключаемой</strong> — это позволит отслеживать её состояние.
+    </p>
+    <span class="code-label">signals_slots.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
+import sys
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Моё приложение")
+        
+        button = QPushButton("Нажми меня!")
+        button.setCheckable(True)          # Переключаемый режим
+        button.clicked.connect(self.the_button_was_clicked)
+        button.clicked.connect(self.the_button_was_toggled)
+        
+        self.setCentralWidget(button)
+    
+    def the_button_was_clicked(self):
+        print("Нажато!")
+    
+    def the_button_was_toggled(self, checked):
+        print("Нажата?", checked)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <p>
+      Вы можете подключить сколько угодно слотов к одному сигналу. 
+      Сигнал <code>.clicked</code> передаёт состояние нажатия (для обычных кнопок — <code>False</code>, 
+      но для переключаемых — <code>True/False</code>).
+    </p>
+
+    <h3>Изменение интерфейса из слота</h3>
+    <p>
+      В слоте можно модифицировать не только саму кнопку, но и другие элементы интерфейса. 
+      Например, изменим текст кнопки после нажатия, отключим её и обновим заголовок окна.
+    </p>
+    <span class="code-label">modify_ui.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
+import sys
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Моё приложение")
+        
+        self.button = QPushButton("Нажми меня!")
+        self.button.clicked.connect(self.the_button_was_clicked)
+        self.setCentralWidget(self.button)
+    
+    def the_button_was_clicked(self):
+        self.button.setText("Вы уже нажали на меня.")
+        self.button.setEnabled(False)
+        self.setWindowTitle("Моё приложение с одним нажатием")
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <strong>Важно:</strong> Сигналы не ограничены только тем виджетом, который их инициировал. 
+      В слоте можно делать всё что угодно: менять другие виджеты, обновлять данные, вызывать функции.
+    </div>
+
+    <h3>Сигнал изменения заголовка окна</h3>
+    <p>
+      <code>QMainWindow</code> тоже имеет сигналы. Например, <code>windowTitleChanged</code> срабатывает 
+      при изменении заголовка окна (и только тогда, когда новый заголовок отличается от предыдущего). 
+      Это позволяет строить цепочки реакций.
+    </p>
+    <span class="code-label">window_title_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
+import sys
+from random import choice
+
+window_titles = [
+    "My App", "Still My App", "What on earth",
+    "This is surprising", "Something went wrong"
+]
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        self.button = QPushButton("Press Me!")
+        self.button.clicked.connect(self.the_button_was_clicked)
+        self.windowTitleChanged.connect(self.the_window_title_changed)
+        
+        self.setCentralWidget(self.button)
+    
+    def the_button_was_clicked(self):
+        new_title = choice(window_titles)
+        self.setWindowTitle(new_title)
+    
+    def the_window_title_changed(self, window_title):
+        if window_title == "Something went wrong":
+            self.button.setDisabled(True)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <p>
+      Одно событие (нажатие кнопки) запускает цепочку изменений: меняется заголовок, 
+      а сигнал от заголовка управляет доступностью кнопки. Такое разделение ответственности — 
+      ключевой принцип GUI-приложений.
+    </p>
+
+    <h2>Обзор основных виджетов</h2>
+    <p>
+      Qt поставляется с большим набором готовых виджетов. Мы рассмотрим три важнейших: 
+      <code>QLabel</code>, <code>QCheckBox</code> и <code>QComboBox</code>.
+    </p>
+
+    <h3>QLabel — текстовая метка</h3>
+    <p>
+      <code>QLabel</code> — простейший виджет для отображения текста или изображения. 
+      Можно настраивать шрифт, выравнивание и содержимое.
+    </p>
+    <span class="code-label">label_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
+from PySide6.QtCore import Qt
+import sys
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        label = QLabel("Привет, мир!")
+        font = label.font()
+        font.setPointSize(30)
+        label.setFont(font)
+        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        
+        self.setCentralWidget(label)
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="table-flags">
+      <table>
+        <thead>
+          <tr><th>Флаг</th><th>Поведение (горизонтальное)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Qt.AlignLeft</code></td><td>Выравнивание по левому краю</td></tr>
+          <tr><td><code>Qt.AlignRight</code></td><td>Выравнивание по правому краю</td></tr>
+          <tr><td><code>Qt.AlignHCenter</code></td><td>Центрирование по горизонтали</td></tr>
+          <tr><td><code>Qt.AlignJustify</code></td><td>Выравнивание по ширине</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Вертикальные флаги: <code>AlignTop</code>, <code>AlignBottom</code>, <code>AlignVCenter</code>. Флаги комбинируются через <code>|</code>.</p>
+
+    <h3>QCheckBox — флажок</h3>
+    <p>
+      <code>QCheckBox</code> предоставляет переключаемый флажок. Может быть двухсостоянием 
+      (вкл/выкл) или трёхсостоянием (частично выбран). Сигнал <code>stateChanged</code> 
+      передаёт числовое состояние.
+    </p>
+    <span class="code-label">checkbox_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QCheckBox, QMainWindow
+from PySide6.QtCore import Qt
+import sys
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        checkbox = QCheckBox("Это флажок")
+        checkbox.setCheckState(Qt.Checked)   # или Qt.Unchecked / Qt.PartiallyChecked
+        # checkbox.setTristate(True)         # включить трёхсостояние
+        
+        checkbox.stateChanged.connect(self.show_state)
+        self.setCentralWidget(checkbox)
+    
+    def show_state(self, s):
+        print(s == Qt.Checked)   # True/False
+        print(s)                 # 2, 0 или 1
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="note">
+      <p><strong>Состояния QCheckBox:</strong></p>
+      <ul style="margin-top: 4px;">
+        <li><code>Qt.Checked</code> (2) — включён</li>
+        <li><code>Qt.Unchecked</code> (0) — выключен</li>
+        <li><code>Qt.PartiallyChecked</code> (1) — частично (трёхсостояние)</li>
+      </ul>
+    </div>
+
+    <h3>QComboBox — раскрывающийся список</h3>
+    <p>
+      <code>QComboBox</code> позволяет выбирать один элемент из выпадающего списка. 
+      Его можно сделать редактируемым (пользователь вводит своё значение) и ограничивать количество элементов.
+    </p>
+    <span class="code-label">combobox_demo.py</span>
+    <pre><code>from PySide6.QtWidgets import QApplication, QComboBox, QMainWindow
+import sys
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("My App")
+        
+        combo = QComboBox()
+        combo.addItems(["Один", "Два", "Три"])
+        combo.currentIndexChanged.connect(self.index_changed)
+        combo.currentTextChanged.connect(self.text_changed)
+        
+        # Дополнительные настройки:
+        # combo.setEditable(True)                    # возможность ввода своего варианта
+        # combo.setInsertPolicy(QComboBox.InsertAlphabetically)
+        # combo.setMaxCount(10)
+        
+        self.setCentralWidget(combo)
+    
+    def index_changed(self, i):
+        print(f"Индекс: {i}")
+    
+    def text_changed(self, s):
+        print(f"Текст: {s}")
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()</code></pre>
+
+    <div class="table-flags">
+      <table>
+        <thead><tr><th>Политика вставки (<code>InsertPolicy</code>)</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>QComboBox.NoInsert</code></td><td>Не вставлять пользовательский текст</td></tr>
+          <tr><td><code>QComboBox.InsertAtTop</code></td><td>Вставить в начало списка</td></tr>
+          <tr><td><code>QComboBox.InsertAtBottom</code></td><td>Вставить в конец</td></tr>
+          <tr><td><code>QComboBox.InsertAlphabetically</code></td><td>Вставить в алфавитном порядке</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>Итог лекции:</strong> Механизм сигналов и слотов — это то, что делает интерактивные приложения живыми. 
+      Мы научились обрабатывать нажатия кнопок, реагировать на изменения заголовка окна, 
+      а также познакомились с базовыми виджетами: <code>QLabel</code>, <code>QCheckBox</code>, <code>QComboBox</code>. 
+      В следующей лекции погрузимся в менеджеры компоновки (layouts) и создадим настоящее диалоговое окно.
+    </div>
+
+    <div class="questions-block">
+      <h2>Контрольные вопросы</h2>
+      <ol>
+        <li>Что такое сигналы и слоты в Qt? В чём их основное назначение?</li>
+        <li>Как подключить сигнал к пользовательскому методу в PySide6?</li>
+        <li>Как сделать кнопку переключаемой (с сохранением нажатого состояния)?</li>
+        <li>Какие данные передаёт сигнал <code>clicked</code> для переключаемой кнопки?</li>
+        <li>Почему в примере с изменением заголовка окна сигнал <code>windowTitleChanged</code> срабатывает не каждый раз?</li>
+        <li>Как изменить размер шрифта у <code>QLabel</code> и выровнять текст по центру?</li>
+        <li>Чем отличается <code>Qt.Checked</code> от <code>Qt.PartiallyChecked</code>?</li>
+        <li>Как сделать <code>QComboBox</code> редактируемым и задать политику вставки?</li>
+        <li>Какие сигналы есть у <code>QComboBox</code> для отслеживания выбора: по индексу и по тексту?</li>
+        <li>Может ли один сигнал быть подключён к нескольким слотам? Приведите пример.</li>
+      </ol>
+    </div>
+
+  </div>
+
+<div class="footer-nav">
+    <a class="btn btn-outline" href="../index.html">← На главную</a>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-lab" href="../labs.html">Перейти к заданиям →</a>
+      <div style="display:flex; gap:10px;">
+        <a class="btn btn-outline" href="1.html">← Лекция 1</a>
+        <a class="btn btn-next" href="3.html">Лекция 3 →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  const btn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+</script>
+</body>
+</html>

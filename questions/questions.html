@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивный тест по PySide6 — 45 вопросов (расширенный)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #181b25;
+      --border: #1e2330;
+      --accent: #5e9bff;
+      --accent3: #4fd1a5;
+      --accent-dim: rgba(94,155,255,0.12);
+      --text: #c8d0e0;
+      --text-dim: #5a6380;
+      --text-bright: #eef2ff;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Fraunces', Georgia, serif;
+      --body-font: 'Lora', Georgia, serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      line-height: 1.8;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(94,155,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(94,155,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 32px;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      transition: 0.2s;
+    }
+    .back-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .topbar-badge { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 28px;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .sub {
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+    }
+    .question-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: 0.1s;
+    }
+    .question-header {
+      background: var(--surface);
+      padding: 14px 20px;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .q-num {
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-size: 12px;
+    }
+    .q-type {
+      background: rgba(79,209,165,0.1);
+      color: var(--accent3);
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .q-text {
+      padding: 18px 22px 8px 22px;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+    .options {
+      padding: 8px 22px 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-btn {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-family: var(--body-font);
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.15s;
+      text-align: left;
+    }
+    .option-btn:hover:not(.disabled) {
+      background: var(--surface);
+      border-color: var(--accent-dim);
+    }
+    .option-correct {
+      background: rgba(79,209,165,0.15);
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+    .option-wrong {
+      background: rgba(220,80,80,0.12);
+      border-color: #c45;
+      color: #f9a;
+      text-decoration: line-through;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: 0.15s;
+    }
+    .checkbox-label:hover:not(.disabled) {
+      background: var(--surface);
+      border-color: var(--accent-dim);
+    }
+    .checkbox-label.disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    .checkbox-label input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    .multi-correct-label {
+      background: rgba(79,209,165,0.15);
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+    .multi-wrong-label {
+      background: rgba(220,80,80,0.12);
+      border-color: #c45;
+      color: #f9a;
+    }
+    .text-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: var(--body-font);
+      font-size: 14px;
+      color: var(--text);
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .text-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .order-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .order-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      cursor: move;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .order-item.dragging {
+      opacity: 0.5;
+    }
+    .order-handle {
+      cursor: grab;
+      color: var(--text-dim);
+    }
+    .order-index {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .match-pair {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .match-left {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+    .match-right select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: var(--body-font);
+    }
+    .submit-btn, .multi-submit-btn {
+      background: var(--accent);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-family: var(--mono);
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover, .multi-submit-btn:hover {
+      background: #7ab2ff;
+    }
+    .multi-submit-btn {
+      margin-top: 12px;
+      width: fit-content;
+    }
+    .feedback {
+      margin: 0 22px 18px 22px;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.3);
+      display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct { color: var(--accent3); border-left: 3px solid var(--accent3); }
+    .feedback.wrong { color: #f9a; border-left: 3px solid #c45; }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .result-panel {
+      position: sticky;
+      bottom: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 60px;
+      padding: 12px 24px;
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(8px);
+    }
+    .result-stats {
+      display: flex;
+      gap: 24px;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .grade {
+      background: var(--accent-dim);
+      padding: 6px 18px;
+      border-radius: 40px;
+      font-weight: 700;
+    }
+    .reset-btn {
+      background: var(--accent);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-family: var(--mono);
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .reset-btn:hover { background: #7ab2ff; transform: translateY(-1px); }
+    @media (max-width: 650px) {
+      .result-panel { flex-direction: column; align-items: stretch; border-radius: 20px; }
+      .result-stats { justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<nav class="topbar">
+  <a class="back-btn" href="../index.html">← На главную</a>
+  <span class="topbar-badge">PySide6 · Расширенный тест</span>
+</nav>
+<div class="container">
+  <h1>📋 45 вопросов по курсу PySide6</h1>
+  <div class="sub">5 типов вопросов: выбор ответа, множественный выбор (с кнопкой "Выбрать"), свободный ввод, хронологический порядок, соответствие</div>
+  <div id="questions-container"></div>
+  <div class="result-panel" id="resultPanel">
+    <div class="result-stats">
+      <span>✅ Правильно: <strong id="correct-count">0</strong> / <span id="total-count">45</span></span>
+      <span>📊 Процент: <strong id="percent">0</strong>%</span>
+    </div>
+    <div><span class="grade" id="grade-label">Оценка: —</span></div>
+    <button class="reset-btn" id="reset-test">⟳ Сбросить все ответы</button>
+  </div>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // БАЗА ВОПРОСОВ (45 штук) — разные типы
+  // --------------------------------------------------------------
+  const questionsData = [
+    // ========== ТИП: choice (одиночный выбор) - 20 вопросов ==========
+    { text: "Как расшифровывается аббревиатура WIMP?", type: "choice", options: ["Windows, Icons, Mouse, Pointer", "Windows, Icons, Menus, Pointing device", "Widgets, Interface, Modules, Python", "Window, Input, Menu, Program"], correct: "Windows, Icons, Menus, Pointing device" },
+    { text: "PySide6 — это:", type: "choice", options: ["Альтернативное название PyQt6", "Официальная привязка Python к Qt от The Qt Company", "Сторонняя библиотека для создания консольных приложений", "Фреймворк для машинного обучения"], correct: "Официальная привязка Python к Qt от The Qt Company" },
+    { text: "Какой метод используется для подключения сигнала к слоту в PySide6?", type: "choice", options: ["signal.bind()", "signal.link()", "signal.connect()", "signal.attach()"], correct: "signal.connect()" },
+    { text: "Что произойдёт, если не вызвать `window.show()` после создания виджета?", type: "choice", options: ["Окно появится, но будет неактивным", "Окно появится в свёрнутом виде", "Окно не появится (останется скрытым)", "Приложение завершится с ошибкой"], correct: "Окно не появится (останется скрытым)" },
+    { text: "Для чего в QMainWindow используется метод setCentralWidget()?", type: "choice", options: ["Для добавления виджета в строку состояния", "Для установки виджета, который будет занимать центральную область окна", "Для добавления виджета на панель инструментов", "Для создания всплывающего окна"], correct: "Для установки виджета, который будет занимать центральную область окна" },
+    { text: "Что такое сигнал (signal) в Qt?", type: "choice", options: ["Метод, который вызывается при запуске приложения", "Уведомление, которое виджет отправляет при наступлении какого-либо события", "Специальный тип данных для хранения цвета", "Функция для рисования графики"], correct: "Уведомление, которое виджет отправляет при наступлении какого-либо события" },
+    { text: "Как установить размер шрифта 25 пунктов для QLabel?", type: "choice", options: ["label.setFontSize(25)", "label.font().setPointSize(25)", "label.setPointSize(25)", "label.setSize(25)"], correct: "label.font().setPointSize(25)" },
+    { text: "Как добавить элементы в QComboBox?", type: "choice", options: ["combo.addItem()", "combo.addItems()", "combo.append()", "Все варианты верны"], correct: "Все варианты верны" },
+    { text: "Что произойдёт, если подключить несколько слотов к одному сигналу?", type: "choice", options: ["Будет выполнен только первый слот", "Будет выполнен только последний слот", "Все слоты выполнятся в порядке подключения", "Ошибка"], correct: "Все слоты выполнятся в порядке подключения" },
+    { text: "Как убрать отступы вокруг компоновки?", type: "choice", options: ["setContentsMargins(0,0,0,0)", "setMargin(0)", "setPadding(0)", "setSpacing(0)"], correct: "setContentsMargins(0,0,0,0)" },
+    { text: "Готовый виджет для вкладок:", type: "choice", options: ["QTabbedPane", "QTabWidget", "QStackedTabs", "QNotebook"], correct: "QTabWidget" },
+    { text: "Сигнал QAction при активации:", type: "choice", options: ["activated", "clicked", "triggered", "pressed"], correct: "triggered" },
+    { text: "Как сделать QAction переключаемым?", type: "choice", options: ["setCheckable(True)", "setToggle(True)", "setSwitchable(True)", "setSelectable(True)"], correct: "setCheckable(True)" },
+    { text: "Как добавить строку состояния?", type: "choice", options: ["setStatusBar(QStatusBar())", "statusBar = QStatusBar()", "addStatusBar()", "createStatusBar()"], correct: "setStatusBar(QStatusBar())" },
+    { text: "Горячая клавиша для QAction (Ctrl+S):", type: "choice", options: ["setShortcut('Ctrl+S')", "setHotkey()", "setKeySequence()", "bind()"], correct: "setShortcut('Ctrl+S')" },
+    { text: "Запуск модального диалога:", type: "choice", options: ["show()", "open()", "exec()", "run()"], correct: "exec()" },
+    { text: "Почему исчезает окно, созданное в локальной переменной?", type: "choice", options: ["автотаймер", "сборщик мусора Python", "ошибка платформы", "не вызван show()"], correct: "сборщик мусора Python" },
+    { text: "Какой метод выравнивает текст в QLabel по центру по горизонтали и вертикали?", type: "choice", options: ["label.setAlignment(Qt.AlignCenter)", "label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)", "label.center()", "label.setCenter(True)"], correct: "label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)" },
+    { text: "Что такое слот (slot) в Qt?", type: "choice", options: ["Получатель сигнала (функция или метод)", "Тип переменной для хранения строки", "Виджет для ввода текста", "Компоновка для размещения виджетов"], correct: "Получатель сигнала (функция или метод)" },
+    { text: "Разделитель на панели инструментов:", type: "choice", options: ["addSeparator()", "addDivider()", "addLine()", "addSpacer()"], correct: "addSeparator()" },
+    
+    // ========== ТИП: multi (множественный выбор) - 5 вопросов ==========
+    { text: "Какие платформы поддерживает Qt для создания кроссплатформенных приложений? (выберите все)", type: "multi", options: ["Windows", "macOS", "Linux", "Android", "iOS"], correct: "Windows,macOS,Linux,Android" },
+    { text: "Какие из следующих сигналов есть у QPushButton? (выберите все)", type: "multi", options: ["clicked", "pressed", "released", "textChanged", "toggled"], correct: "clicked,pressed,released,toggled" },
+    { text: "Какие состояния может иметь QCheckBox? (выберите все)", type: "multi", options: ["Qt.Checked", "Qt.Unchecked", "Qt.PartiallyChecked", "Qt.Indeterminate"], correct: "Qt.Checked,Qt.Unchecked,Qt.PartiallyChecked" },
+    { text: "Какие методы используются для добавления элементов в QComboBox? (выберите все)", type: "multi", options: ["addItem()", "addItems()", "insertItem()", "append()"], correct: "addItem(),addItems()" },
+    { text: "Какие виды компоновок существуют в Qt? (выберите все)", type: "multi", options: ["QVBoxLayout", "QHBoxLayout", "QGridLayout", "QFormLayout", "QStackedLayout"], correct: "QVBoxLayout,QHBoxLayout,QGridLayout,QFormLayout,QStackedLayout" },
+    
+    // ========== ТИП: text (свободный ввод) - 8 вопросов ==========
+    { text: "Какой класс отвечает за цикл обработки событий в Qt-приложении? (напишите название класса)", type: "text", correct: "QApplication", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Как сделать кнопку переключаемой (toggle button) в PySide6? (напишите название метода)", type: "text", correct: "setCheckable", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Какой виджет используется для создания текстовой метки?", type: "text", correct: "QLabel", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Какая компоновка располагает виджеты вертикально? (напишите название класса)", type: "text", correct: "QVBoxLayout", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Какой сигнал QAction срабатывает при активации? (напишите название сигнала)", type: "text", correct: "triggered", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Как добавить панель инструментов в QMainWindow? (напишите название метода)", type: "text", correct: "addToolBar", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Класс для диалоговых окон в Qt:", type: "text", correct: "QDialog", normalize: (a) => a.trim().toLowerCase() },
+    { text: "Какой метод QDialog используется для запуска модального диалога?", type: "text", correct: "exec", normalize: (a) => a.trim().toLowerCase() },
+    
+    // ========== ТИП: order (хронологический порядок) - 4 вопроса ==========
+    { text: "Расположите этапы создания Qt-приложения в правильном порядке:",
+      type: "order",
+      items: ["Создание виджетов", "Подключение сигналов к слотам", "Вызов app.exec_()", "Создание QApplication", "Вызов window.show()"],
+      correct: ["Создание QApplication", "Создание виджетов", "Подключение сигналов к слотам", "Вызов window.show()", "Вызов app.exec_()"] },
+    { text: "Расставьте события в хронологическом порядке при нажатии на QPushButton:",
+      type: "order",
+      items: ["Сигнал released", "Сигнал pressed", "Сигнал clicked", "mousePressEvent", "mouseReleaseEvent"],
+      correct: ["mousePressEvent", "Сигнал pressed", "mouseReleaseEvent", "Сигнал released", "Сигнал clicked"] },
+    { text: "Порядок наследования классов: от базового к производному",
+      type: "order",
+      items: ["QMainWindow", "QWidget", "QObject", "QPushButton"],
+      correct: ["QObject", "QWidget", "QPushButton", "QMainWindow"] },
+    { text: "Расположите методы в порядке вызова при создании и отображении окна:",
+      type: "order",
+      items: ["__init__", "show()", "exec()", "setCentralWidget()"],
+      correct: ["__init__", "setCentralWidget()", "show()", "exec()"] },
+    
+    // ========== ТИП: match (соответствие) - 8 вопросов ==========
+    { text: "Сопоставьте сигнал с его описанием:",
+      type: "match",
+      pairs: [
+        { left: "clicked", right: "Срабатывает при нажатии и отпускании кнопки" },
+        { left: "pressed", right: "Срабатывает в момент нажатия кнопки" },
+        { left: "released", right: "Срабатывает в момент отпускания кнопки" },
+        { left: "toggled", right: "Срабатывает при изменении состояния переключаемой кнопки" }
+      ],
+      correct: { "clicked": "Срабатывает при нажатии и отпускании кнопки", "pressed": "Срабатывает в момент нажатия кнопки", "released": "Срабатывает в момент отпускания кнопки", "toggled": "Срабатывает при изменении состояния переключаемой кнопки" } },
+    { text: "Сопоставьте виджет с его назначением:",
+      type: "match",
+      pairs: [
+        { left: "QLabel", right: "Отображение текста или изображения" },
+        { left: "QLineEdit", right: "Однострочный ввод текста" },
+        { left: "QComboBox", right: "Выпадающий список" },
+        { left: "QCheckBox", right: "Флажок для выбора опции" }
+      ],
+      correct: { "QLabel": "Отображение текста или изображения", "QLineEdit": "Однострочный ввод текста", "QComboBox": "Выпадающий список", "QCheckBox": "Флажок для выбора опции" } },
+    { text: "Сопоставьте компоновку с её описанием:",
+      type: "match",
+      pairs: [
+        { left: "QVBoxLayout", right: "Вертикальное расположение виджетов" },
+        { left: "QHBoxLayout", right: "Горизонтальное расположение виджетов" },
+        { left: "QGridLayout", right: "Расположение в сетке (строки/столбцы)" },
+        { left: "QFormLayout", right: "Форма с подписями и полями ввода" }
+      ],
+      correct: { "QVBoxLayout": "Вертикальное расположение виджетов", "QHBoxLayout": "Горизонтальное расположение виджетов", "QGridLayout": "Расположение в сетке (строки/столбцы)", "QFormLayout": "Форма с подписями и полями ввода" } },
+    { text: "Сопоставьте класс диалога с его назначением:",
+      type: "match",
+      pairs: [
+        { left: "QMessageBox", right: "Стандартные сообщения" },
+        { left: "QFileDialog", right: "Выбор файлов и папок" },
+        { left: "QColorDialog", right: "Выбор цвета" },
+        { left: "QFontDialog", right: "Выбор шрифта" }
+      ],
+      correct: { "QMessageBox": "Стандартные сообщения", "QFileDialog": "Выбор файлов и папок", "QColorDialog": "Выбор цвета", "QFontDialog": "Выбор шрифта" } },
+    { text: "Сопоставьте метод QMessageBox с типом сообщения:",
+      type: "match",
+      pairs: [
+        { left: "information()", right: "Информационное сообщение" },
+        { left: "warning()", right: "Предупреждение" },
+        { left: "critical()", right: "Критическая ошибка" },
+        { left: "question()", right: "Вопрос с выбором" }
+      ],
+      correct: { "information()": "Информационное сообщение", "warning()": "Предупреждение", "critical()": "Критическая ошибка", "question()": "Вопрос с выбором" } },
+    { text: "Сопоставьте событие мыши с его обработчиком:",
+      type: "match",
+      pairs: [
+        { left: "Нажатие кнопки", right: "mousePressEvent" },
+        { left: "Отпускание кнопки", right: "mouseReleaseEvent" },
+        { left: "Движение мыши", right: "mouseMoveEvent" },
+        { left: "Двойной щелчок", right: "mouseDoubleClickEvent" }
+      ],
+      correct: { "Нажатие кнопки": "mousePressEvent", "Отпускание кнопки": "mouseReleaseEvent", "Движение мыши": "mouseMoveEvent", "Двойной щелчок": "mouseDoubleClickEvent" } },
+    { text: "Сопоставьте действие с его методом в QMainWindow:",
+      type: "match",
+      pairs: [
+        { left: "Добавить тулбар", right: "addToolBar()" },
+        { left: "Добавить строку состояния", right: "setStatusBar()" },
+        { left: "Установить центральный виджет", right: "setCentralWidget()" },
+        { left: "Создать меню", right: "menuBar()" }
+      ],
+      correct: { "Добавить тулбар": "addToolBar()", "Добавить строку состояния": "setStatusBar()", "Установить центральный виджет": "setCentralWidget()", "Создать меню": "menuBar()" } },
+    { text: "Сопоставьте свойство с его методом setter:",
+      type: "match",
+      pairs: [
+        { left: "Текст кнопки", right: "setText()" },
+        { left: "Включить/выключить", right: "setEnabled()" },
+        { left: "Видимость", right: "setVisible()" },
+        { left: "Размер шрифта", right: "setPointSize()" }
+      ],
+      correct: { "Текст кнопки": "setText()", "Включить/выключить": "setEnabled()", "Видимость": "setVisible()", "Размер шрифта": "setPointSize()" } }
+  ];
+
+  const TOTAL_QS = questionsData.length;
+  let userAnswers = new Array(TOTAL_QS).fill(null);
+  let answerStatus = new Array(TOTAL_QS).fill(false);
+  let tempMultiSelections = new Array(TOTAL_QS).fill(null).map(() => []);
+
+  function checkAnswer(question, userAnswer) {
+    if (question.type === "choice") {
+      return userAnswer === question.correct;
+    }
+    else if (question.type === "multi") {
+      let userSet = new Set(userAnswer.split(',').map(s => s.trim()));
+      let correctSet = new Set(question.correct.split(',').map(s => s.trim()));
+      if (userSet.size === correctSet.size && [...userSet].every(v => correctSet.has(v))) return true;
+      return false;
+    }
+    else if (question.type === "text") {
+      let normalize = question.normalize || (s => s.trim().toLowerCase());
+      return normalize(userAnswer) === normalize(question.correct);
+    }
+    else if (question.type === "order") {
+      return JSON.stringify(userAnswer) === JSON.stringify(question.correct);
+    }
+    else if (question.type === "match") {
+      return JSON.stringify(userAnswer) === JSON.stringify(question.correct);
+    }
+    return false;
+  }
+
+  function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+    
+    questionsData.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      
+      const header = document.createElement('div');
+      header.className = 'question-header';
+      let typeLabel = "";
+      if (q.type === "choice") typeLabel = "Выбор ответа";
+      else if (q.type === "multi") typeLabel = "Множественный выбор";
+      else if (q.type === "text") typeLabel = "Свободный ввод";
+      else if (q.type === "order") typeLabel = "Хронологический порядок";
+      else if (q.type === "match") typeLabel = "Соответствие";
+      header.innerHTML = `<span class="q-num">Вопрос ${idx+1}</span><span class="q-type">${typeLabel}</span>`;
+      
+      const qTextDiv = document.createElement('div');
+      qTextDiv.className = 'q-text';
+      qTextDiv.innerText = q.text;
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'options';
+      
+      if (q.type === "choice") {
+        q.options.forEach(opt => {
+          const btn = document.createElement('div');
+          btn.className = 'option-btn';
+          btn.innerText = opt;
+          if (userAnswers[idx] !== null) {
+            btn.classList.add('disabled');
+            if (userAnswers[idx] === opt) {
+              answerStatus[idx] ? btn.classList.add('option-correct') : btn.classList.add('option-wrong');
+            }
+          }
+          btn.addEventListener('click', () => {
+            if (userAnswers[idx] !== null) return;
+            const isCorrect = checkAnswer(q, opt);
+            userAnswers[idx] = opt;
+            answerStatus[idx] = isCorrect;
+            renderQuestions();
+            updateStatsAndGrade();
+          });
+          contentDiv.appendChild(btn);
+        });
+      }
+      else if (q.type === "multi") {
+        if (userAnswers[idx] !== null) {
+          const selectedAnswers = userAnswers[idx].split(',').map(s => s.trim());
+          q.options.forEach(opt => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label disabled';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.disabled = true;
+            const isSelected = selectedAnswers.includes(opt);
+            checkbox.checked = isSelected;
+            const span = document.createElement('span');
+            span.innerText = opt;
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            const correctSet = new Set(q.correct.split(',').map(s => s.trim()));
+            if (correctSet.has(opt)) {
+              label.classList.add('multi-correct-label');
+            } else if (isSelected && !correctSet.has(opt)) {
+              label.classList.add('multi-wrong-label');
+            }
+            contentDiv.appendChild(label);
+          });
+          const statusDiv = document.createElement('div');
+          statusDiv.style.marginTop = '12px';
+          statusDiv.style.fontSize = '13px';
+          statusDiv.style.color = answerStatus[idx] ? 'var(--accent3)' : '#f9a';
+          statusDiv.innerText = answerStatus[idx] ? '✅ Ответ принят!' : '❌ Ответ неверный';
+          contentDiv.appendChild(statusDiv);
+        } else {
+          q.options.forEach(opt => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = opt;
+            if (tempMultiSelections[idx].includes(opt)) checkbox.checked = true;
+            checkbox.addEventListener('change', (e) => {
+              if (e.target.checked) {
+                if (!tempMultiSelections[idx].includes(opt)) tempMultiSelections[idx].push(opt);
+              } else {
+                tempMultiSelections[idx] = tempMultiSelections[idx].filter(v => v !== opt);
+              }
+            });
+            const span = document.createElement('span');
+            span.innerText = opt;
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            contentDiv.appendChild(label);
+          });
+          const submitBtn = document.createElement('button');
+          submitBtn.innerText = '✓ Выбрать';
+          submitBtn.className = 'multi-submit-btn';
+          submitBtn.onclick = () => {
+            if (userAnswers[idx] !== null) return;
+            if (tempMultiSelections[idx].length === 0) {
+              alert('Пожалуйста, выберите хотя бы один вариант');
+              return;
+            }
+            const answerStr = [...tempMultiSelections[idx]].sort().join(',');
+            const isCorrect = checkAnswer(q, answerStr);
+            userAnswers[idx] = answerStr;
+            answerStatus[idx] = isCorrect;
+            renderQuestions();
+            updateStatsAndGrade();
+          };
+          contentDiv.appendChild(submitBtn);
+        }
+      }
+      else if (q.type === "text") {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Введите ответ...';
+        input.className = 'text-input';
+        if (userAnswers[idx]) input.value = userAnswers[idx];
+        const submitBtn = document.createElement('button');
+        submitBtn.innerText = 'Ответить';
+        submitBtn.className = 'submit-btn';
+        submitBtn.onclick = () => {
+          if (userAnswers[idx] !== null) return;
+          const answer = input.value.trim();
+          if (!answer) return;
+          const isCorrect = checkAnswer(q, answer);
+          userAnswers[idx] = answer;
+          answerStatus[idx] = isCorrect;
+          renderQuestions();
+          updateStatsAndGrade();
+        };
+        contentDiv.appendChild(input);
+        contentDiv.appendChild(submitBtn);
+        if (userAnswers[idx] !== null) {
+          input.disabled = true;
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = '0.5';
+        }
+      }
+      else if (q.type === "order") {
+        const orderList = document.createElement('div');
+        orderList.className = 'order-list';
+        let items = userAnswers[idx] ? [...userAnswers[idx]] : [...q.items];
+        const renderOrder = () => {
+          orderList.innerHTML = '';
+          items.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'order-item';
+            div.draggable = userAnswers[idx] === null;
+            div.setAttribute('data-index', i);
+            div.innerHTML = `<span class="order-handle">⋮⋮</span><span class="order-index">${i+1}</span><span>${item}</span>`;
+            if (userAnswers[idx] === null) {
+              div.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', i);
+                div.classList.add('dragging');
+              });
+              div.addEventListener('dragend', (e) => div.classList.remove('dragging'));
+              div.addEventListener('dragover', (e) => e.preventDefault());
+              div.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const from = parseInt(e.dataTransfer.getData('text/plain'));
+                const to = i;
+                if (from === to) return;
+                const moved = items[from];
+                items.splice(from, 1);
+                items.splice(to, 0, moved);
+                renderOrder();
+              });
+            }
+            orderList.appendChild(div);
+          });
+        };
+        renderOrder();
+        const submitBtn = document.createElement('button');
+        submitBtn.innerText = 'Ответить';
+        submitBtn.className = 'submit-btn';
+        submitBtn.onclick = () => {
+          if (userAnswers[idx] !== null) return;
+          const isCorrect = checkAnswer(q, items);
+          userAnswers[idx] = [...items];
+          answerStatus[idx] = isCorrect;
+          renderQuestions();
+          updateStatsAndGrade();
+        };
+        contentDiv.appendChild(orderList);
+        contentDiv.appendChild(submitBtn);
+        if (userAnswers[idx] !== null) submitBtn.disabled = true;
+      }
+      else if (q.type === "match") {
+        const matchDiv = document.createElement('div');
+        let selections = userAnswers[idx] ? {...userAnswers[idx]} : {};
+        q.pairs.forEach(pair => {
+          const pairDiv = document.createElement('div');
+          pairDiv.className = 'match-pair';
+          const leftSpan = document.createElement('div');
+          leftSpan.className = 'match-left';
+          leftSpan.innerText = pair.left;
+          const select = document.createElement('select');
+          const options = ['', ...q.pairs.map(p => p.right)];
+          options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.innerText = opt || '— выберите —';
+            select.appendChild(option);
+          });
+          if (selections[pair.left]) select.value = selections[pair.left];
+          if (userAnswers[idx] !== null) select.disabled = true;
+          select.onchange = () => { selections[pair.left] = select.value; };
+          pairDiv.appendChild(leftSpan);
+          pairDiv.appendChild(select);
+          matchDiv.appendChild(pairDiv);
+        });
+        const submitBtn = document.createElement('button');
+        submitBtn.innerText = 'Ответить';
+        submitBtn.className = 'submit-btn';
+        submitBtn.onclick = () => {
+          if (userAnswers[idx] !== null) return;
+          let allSelected = true;
+          for (let pair of q.pairs) {
+            if (!selections[pair.left] || selections[pair.left] === '') allSelected = false;
+          }
+          if (!allSelected) {
+            alert('Пожалуйста, заполните все соответствия');
+            return;
+          }
+          const isCorrect = checkAnswer(q, selections);
+          userAnswers[idx] = {...selections};
+          answerStatus[idx] = isCorrect;
+          renderQuestions();
+          updateStatsAndGrade();
+        };
+        contentDiv.appendChild(matchDiv);
+        contentDiv.appendChild(submitBtn);
+        if (userAnswers[idx] !== null) submitBtn.disabled = true;
+      }
+      
+      card.appendChild(header);
+      card.appendChild(qTextDiv);
+      card.appendChild(contentDiv);
+      
+      const feedbackDiv = document.createElement('div');
+      feedbackDiv.className = 'feedback';
+      if (userAnswers[idx] !== null && !answerStatus[idx]) {
+        feedbackDiv.classList.add('show');
+        feedbackDiv.classList.add('wrong');
+        let correctAnswer = "";
+        if (q.type === "choice") correctAnswer = q.correct;
+        else if (q.type === "multi") correctAnswer = q.correct;
+        else if (q.type === "text") correctAnswer = q.correct;
+        else if (q.type === "order") correctAnswer = q.correct.join(' → ');
+        else if (q.type === "match") correctAnswer = Object.entries(q.correct).map(([k,v]) => `${k} → ${v}`).join('; ');
+        feedbackDiv.innerHTML = `❌ Неверно. Правильный ответ: ${correctAnswer}`;
+      } else if (userAnswers[idx] !== null && answerStatus[idx]) {
+        feedbackDiv.classList.add('show');
+        feedbackDiv.classList.add('correct');
+        feedbackDiv.innerHTML = '✅ Верно!';
+      }
+      card.appendChild(feedbackDiv);
+      container.appendChild(card);
+    });
+  }
+
+  function updateStatsAndGrade() {
+    const correctCount = answerStatus.filter(v => v === true).length;
+    const percent = Math.round((correctCount / TOTAL_QS) * 100);
+    document.getElementById('correct-count').innerText = correctCount;
+    document.getElementById('total-count').innerText = TOTAL_QS;
+    document.getElementById('percent').innerText = percent;
+    let grade = '';
+    if (percent < 50) grade = '2 (неудовлетворительно)';
+    else if (percent < 70) grade = '3 (удовлетворительно)';
+    else if (percent < 85) grade = '4 (хорошо)';
+    else grade = '5 (отлично)';
+    document.getElementById('grade-label').innerHTML = `Оценка: ${grade}`;
+  }
+
+  function resetTest() {
+    userAnswers.fill(null);
+    answerStatus.fill(false);
+    tempMultiSelections = new Array(TOTAL_QS).fill(null).map(() => []);
+    renderQuestions();
+    updateStatsAndGrade();
+  }
+
+  document.getElementById('reset-test').addEventListener('click', resetTest);
+  renderQuestions();
+  updateStatsAndGrade();
+</script>
+</body>
+</html>
